@@ -1,0 +1,16 @@
+add-global-variants = true
+wipe = true
+
+[sqlite3]
+  dbname = "/Users/selmison/Projects/code-micro-videos/backend/.dbdata/db.sqlite"
+  blacklist = ["gorp_migrations", "goose_db_version"]
+
+
+[psql]
+  dbname = "code_micro_videos"
+  host = "127.0.0.1"
+  port   = 54320
+  user = "postgres"
+  pass = "postgres"
+  sslmode = "disable"
+  blacklist = ["goose_db_version"]
