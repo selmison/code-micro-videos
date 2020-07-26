@@ -3,8 +3,11 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 const (
@@ -14,13 +17,15 @@ const (
 )
 
 var (
-	Url string
+	Url         string
+	ProjectPath string
 )
 
 func init() {
-	path, err := os.Getwd()
+	cmdOut, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln(fmt.Sprintf(`Error on getting the base path: %s - %s`, err.Error(), string(cmdOut)))
 	}
-	Url = path + string(os.PathSeparator) + file
+	ProjectPath = strings.TrimSpace(string(cmdOut))
+	Url = ProjectPath + string(os.PathSeparator) + file
 }
