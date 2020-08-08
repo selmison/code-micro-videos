@@ -1,28 +1,16 @@
+//go:generate sqlboiler psql --no-tests --add-global-variants --add-soft-deletes --config /Users/selmison/Projects/code-micro-videos/backend/sqlboiler.toml --output /Users/selmison/Projects/code-micro-videos/backend/models
+
 package main
 
 import (
 	"context"
-	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/selmison/code-micro-videos/config"
-	"github.com/selmison/code-micro-videos/pkg/http/rest"
-	"github.com/selmison/code-micro-videos/pkg/listing"
-	"github.com/selmison/code-micro-videos/pkg/modifying"
-	"github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
-	"github.com/selmison/code-micro-videos/testdata/seeds"
 	"log"
+
+	"github.com/selmison/code-micro-videos/config"
+	"github.com/selmison/code-micro-videos/pkg/api/rest"
 )
 
 func main() {
-	seeds.InitDB()
 	ctx := context.Background()
-	db, err := sql.Open(config.Drive, config.Url)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	r := sqlboiler.NewRepository(ctx, db)
-	lister := listing.NewService(r)
-	modifier := modifying.NewService(r)
-	rest.Handler(config.AddressServer, lister, modifier)
+	log.Fatalln(rest.InitApp(ctx, config.DBConnStr))
 }

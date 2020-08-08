@@ -3,15 +3,17 @@ package seeds
 import (
 	"context"
 	"database/sql"
-	"github.com/bxcodec/faker/v3"
-	"github.com/google/uuid"
-	"github.com/selmison/code-micro-videos/models"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/boil"
 	"log"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/bxcodec/faker/v3"
+	"github.com/google/uuid"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/selmison/code-micro-videos/models"
 )
 
 type Seed struct {
@@ -29,8 +31,8 @@ func createCategory(ctx context.Context, name, description string) error {
 		ID:          uuid.New().String(),
 		Name:        name,
 		Description: null.String{String: description, Valid: true},
-		CreatedAt:   null.String{String: time.Now().String(), Valid: true},
-		UpdatedAt:   null.String{String: time.Now().String(), Valid: true},
+		CreatedAt:   null.Time{Time: time.Now(), Valid: true},
+		UpdatedAt:   null.Time{Time: time.Now(), Valid: true},
 	}
 	err := c.InsertG(ctx, boil.Infer())
 	if err != nil {
