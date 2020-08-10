@@ -111,10 +111,6 @@ func Test_integration_CategoryCreate(t *testing.T) {
 					t.Errorf("read body: %v", err)
 				}
 				data := strings.TrimSpace(string(bs))
-				//comp, err := JSONBytesEqual(bs, []byte(tt.want.body))
-				//if err != nil {
-				//	t.Errorf("compare json: %v", err)
-				//}
 				if data != tt.want.body {
 					t.Errorf("Body: %v, want: %v", data, tt.want.body)
 				}

@@ -22,7 +22,7 @@ type Service interface {
 	UpdateGenre(name string, c GenreDTO) error
 }
 
-// NewService creates a listing service with the necessary dependencies
+// NewService creates a crud service with the necessary dependencies
 func NewService(r Repository) *service {
 	return &service{r}
 }

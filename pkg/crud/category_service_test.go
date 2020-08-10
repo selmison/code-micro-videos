@@ -179,11 +179,6 @@ func Test_service_UpdateCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
-	//indexRandom := rand.Intn(len(seedsArray))
-	//fakeNames := [2]string{
-	//	faker.FirstName(),
-	//	seedsArray[indexRandom].Name,
-	//}
 	const (
 		fakeExistName        = "fakeExistName"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
