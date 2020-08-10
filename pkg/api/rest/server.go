@@ -13,7 +13,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 

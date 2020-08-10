@@ -1,11 +1,6 @@
 add-global-variants = true
 wipe = true
 
-[sqlite3]
-  dbname = "/Users/selmison/Projects/code-micro-videos/backend/.dbdata/db.sqlite"
-  blacklist = ["gorp_migrations", "goose_db_version"]
-
-
 [psql]
 dbname = "code-micro-videos"
 host = "127.0.0.1"

@@ -13,7 +13,6 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/justinas/alice v1.2.0
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
-	github.com/mattn/go-sqlite3 v1.14.0
 	github.com/rs/zerolog v1.19.0
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
 	github.com/testcontainers/testcontainers-go v0.7.0
