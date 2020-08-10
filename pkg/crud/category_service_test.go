@@ -183,8 +183,6 @@ func Test_service_UpdateCategory(t *testing.T) {
 		fakeExistName        = "fakeExistName"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
 	)
-
-	//fakeDescription := faker.Sentence()
 	type fields struct {
 		r sqlboiler.Repository
 	}

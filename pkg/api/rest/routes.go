@@ -64,6 +64,5 @@ func (s *server) routes() {
 
 	for _, route := range routes {
 		s.router.HandlerFunc(route.method, route.pattern, route.handlerFunc)
-		//s.router.MethodFunc(route.method, route.pattern, route.handlerFunc)
 	}
 }
