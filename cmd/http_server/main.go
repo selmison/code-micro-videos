@@ -12,5 +12,11 @@ import (
 
 func main() {
 	ctx := context.Background()
-	log.Fatalln(rest.InitApp(ctx, config.DBConnStr))
+	cfg, err := config.NewCFG()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if err := rest.InitApp(ctx, cfg.DBConnStr); err != nil {
+		log.Fatalln(err)
+	}
 }

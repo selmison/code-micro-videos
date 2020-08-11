@@ -1,19 +1,23 @@
 // +build integration
 
-package sqlboiler
+package rest_test
 
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/selmison/code-micro-videos/config"
 	"github.com/selmison/code-micro-videos/models"
+	"github.com/selmison/code-micro-videos/pkg/api/rest"
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
@@ -22,20 +26,32 @@ func TestMain(m *testing.M) {
 }
 
 func testMain(m *testing.M) int {
-	teardownTestMain, err := setupTestMain()
+	teardownTestCase, err := setupTestMain()
 	if err != nil {
 		return 1
 	}
-	defer teardownTestMain(m)
+	defer teardownTestCase(m)
 	cfg, err := config.NewCFG()
 	if err != nil {
 		return 1
 	}
 	if err := config.InitDB(cfg.DBConnStr); err != nil {
-		log.Fatalln("init db: ", err)
+		log.Fatalln(err, "init db")
 		return 1
 	}
-	return m.Run()
+	var code int
+	go func() {
+		if err := rest.InitApp(context.Background(), cfg.DBConnStr); err != nil {
+			code = 1
+			log.Fatalln(err, "init app")
+		}
+	}()
+	if code > 0 {
+		return code
+	}
+	time.Sleep(1 * time.Second)
+	code = m.Run()
+	return code
 }
 
 func setupTestMain() (func(m *testing.M), error) {
@@ -50,41 +66,57 @@ func setupTestMain() (func(m *testing.M), error) {
 	}, nil
 }
 
-func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), *Repository, error) {
+func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), error) {
 	cfg, err := config.NewCFG()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("test: failed to get config: %v", err)
+		return nil, nil, fmt.Errorf("test: failed to get config: %v", err)
 	}
 	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("test: failed to open DB: %v", err)
+		return nil, nil, fmt.Errorf("test: failed to open DB: %v", err)
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("test: failed to close DB: %v", err)
+		}
+	}()
 	ctx := context.Background()
-	r := NewRepository(ctx, db)
 	switch v := fakes.(type) {
 	case []models.Category:
 		for _, category := range v {
 			err = category.InsertG(ctx, boil.Infer())
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("test: insert category: %s", err)
+				return nil, nil, fmt.Errorf("test: insert category: %s", err)
 			}
 		}
 	case []models.Genre:
 		for _, genre := range v {
 			err = genre.InsertG(ctx, boil.Infer())
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("test: insert category: %s", err)
+				return nil, nil, fmt.Errorf("test: insert category: %s", err)
 			}
 		}
 	}
 	return cfg, func(t *testing.T) {
-		defer func() {
-			if err := db.Close(); err != nil {
-				t.Errorf("test: failed to close DB: %v", err)
-			}
-		}()
 		if err := testdata.ClearTables(cfg.DBDrive, cfg.DBConnStr); err != nil {
 			t.Errorf("test: clear categories table: %v", err)
 		}
-	}, r, nil
+	}, nil
+}
+
+func toJSON(i interface{}) string {
+	s, _ := json.Marshal(i)
+	return string(s)
+}
+
+// JSONBytesEqual compares the JSON in two byte slices.
+func JSONBytesEqual(a, b []byte) (bool, error) {
+	var j, j2 interface{}
+	if err := json.Unmarshal(a, &j); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(b, &j2); err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(j2, j), nil
 }

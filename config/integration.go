@@ -1,41 +1,92 @@
-// +build integration
+//+build integration
 
 package config
 
 import (
 	"context"
-	"database/sql"
-	"log"
+	"fmt"
+	"strconv"
+	"sync"
 
-	"github.com/selmison/code-micro-videos/models"
+	"github.com/docker/go-connections/nat"
+	"github.com/testcontainers/testcontainers-go"
 )
 
-const (
-	AddressServer = "127.0.0.1:3333"
-	DBDrive       = "postgres"
-	DBName        = "code-micro-videos"
-	DBPort        = 5432
-	DBUser        = "postgres"
-	DBPass        = "postgres"
-	DBSSLMode     = "disable"
-)
+var once sync.Once
+var singleInstance *Config
 
-var (
-	DBConnStr string
-)
+type Config struct {
+	ctx           context.Context
+	Container     *testcontainers.Container
+	AddressServer string
+	DBDrive       string
+	DBName        string
+	DBPort        int
+	DBUser        string
+	DBPass        string
+	DBSSLMode     string
+	DBConnStr     string
+}
 
-func ClearCategoriesTable(dbDriver, dbConnStr string) error {
-	db, err := sql.Open(dbDriver, dbConnStr)
-	if err != nil {
-		return err
+func NewCFG() (*Config, error) {
+	var e error
+	if singleInstance == nil {
+		once.Do(
+			func() {
+				ctx := context.Background()
+				dbContainer, err := InitDBContainer(ctx)
+				if err != nil {
+					e = err
+					return
+				}
+				host, err := (*dbContainer).Host(ctx)
+				if err != nil {
+					e = fmt.Errorf("access dbContainer: %s\n", err)
+					return
+				}
+				port, err := nat.NewPort("tcp", strconv.Itoa(dbPort))
+				if err != nil {
+					e = err
+					return
+				}
+				mappedPort, err := (*dbContainer).MappedPort(ctx, port)
+				if err != nil {
+					e = fmt.Errorf("access dbContainer: %s\n", err)
+					return
+				}
+				dbConnStr := fmt.Sprintf(
+					"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
+					host,
+					mappedPort.Int(),
+					dbName,
+					dbUser,
+					dbPass,
+					dbSSLMode,
+				)
+				singleInstance = &Config{
+					ctx,
+					dbContainer,
+					"127.0.0.1:3333",
+					"postgres",
+					"code-micro-videos",
+					5432,
+					"postgres",
+					"postgres",
+					"disable",
+					dbConnStr,
+				}
+			})
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-	if _, err := models.Categories().DeleteAll(context.Background(), db); err != nil {
-		return err
+	if e != nil {
+		return nil, e
 	}
+	return singleInstance, nil
+}
+
+func (c *Config) ContainerTerminate() error {
+	//cfg = nil
+	//if err := (*c.Container).Terminate(c.ctx); err != nil {
+	//	return fmt.Errorf("terminate dbContainer: %s", err)
+	//}
 	return nil
 }

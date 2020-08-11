@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
-	"github.com/selmison/code-micro-videos/config"
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/pkg/crud"
 	"github.com/selmison/code-micro-videos/pkg/logger"
@@ -21,6 +20,12 @@ import (
 )
 
 func TestRepository_AddCategory(t *testing.T) {
+	cfg, teardownTestCase, repository, err := setupTestCase(t, nil)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -66,7 +71,7 @@ func TestRepository_AddCategory(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
+	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 		return
@@ -77,15 +82,16 @@ func TestRepository_AddCategory(t *testing.T) {
 		}
 	}()
 	ctx := context.Background()
-	r := NewRepository(ctx, db)
 	err = fakeExistCategory.InsertG(ctx, boil.Infer())
 	if err != nil {
+		fmt.Println(cfg.DBConnStr)
+		fmt.Println("selmison")
 		t.Errorf("test: insert category: %s", err)
 		return
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.AddCategory(tt.args.categoryDTO)
+			err := repository.AddCategory(tt.args.categoryDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddCategory() error: %v, wantErr %v", err, tt.wantErr)
 				return
@@ -96,12 +102,15 @@ func TestRepository_AddCategory(t *testing.T) {
 			}
 		})
 	}
-	if err := config.ClearCategoriesTable(config.DBDrive, dbConnStr); err != nil {
-		t.Errorf("test: clear categories table: %v", err)
-	}
 }
 
 func TestRepository_GetCategories(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeCategories)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	maximum := len(testdata.FakeCategories)
 	type args struct {
 		limit int
@@ -148,28 +157,9 @@ func TestRepository_GetCategories(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeCategories {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert category: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.GetCategories(tt.args.limit)
+			got, err := repository.GetCategories(tt.args.limit)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetCategories() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -179,12 +169,15 @@ func TestRepository_GetCategories(t *testing.T) {
 			}
 		})
 	}
-	if err := config.ClearCategoriesTable(config.DBDrive, dbConnStr); err != nil {
-		t.Errorf("test: clear categories table: %v", err)
-	}
 }
 
 func TestRepository_FetchCategory(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeCategories)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -223,28 +216,9 @@ func TestRepository_FetchCategory(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeCategories {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert category: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.FetchCategory(tt.args.name)
+			got, err := repository.FetchCategory(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchCategory() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -254,12 +228,15 @@ func TestRepository_FetchCategory(t *testing.T) {
 			}
 		})
 	}
-	if err := config.ClearCategoriesTable(config.DBDrive, dbConnStr); err != nil {
-		t.Errorf("test: clear categories table: %v", err)
-	}
 }
 
 func TestRepository_RemoveCategory(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeCategories)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -290,28 +267,9 @@ func TestRepository_RemoveCategory(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeCategories {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert category: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.RemoveCategory(tt.args.name)
+			err := repository.RemoveCategory(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RemoveCategory() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -321,12 +279,15 @@ func TestRepository_RemoveCategory(t *testing.T) {
 			}
 		})
 	}
-	if err := config.ClearCategoriesTable(config.DBDrive, dbConnStr); err != nil {
-		t.Errorf("test: clear categories table: %v", err)
-	}
 }
 
 func TestRepository_UpdateCategory(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeCategories)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName            = "action"
 		fakeDoesNotExistName     = "fakeDoesNotExistName"
@@ -377,28 +338,9 @@ func TestRepository_UpdateCategory(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeCategories {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert category: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.UpdateCategory(tt.args.name, tt.args.categoryDTO)
+			err := repository.UpdateCategory(tt.args.name, tt.args.categoryDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateCategory() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -409,12 +351,15 @@ func TestRepository_UpdateCategory(t *testing.T) {
 			}
 		})
 	}
-	if err := config.ClearCategoriesTable(config.DBDrive, dbConnStr); err != nil {
-		t.Errorf("test: clear categories table: %v", err)
-	}
 }
 
 func TestCategory_isValidUUIDHook(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeCategories)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+		return
+	}
+	defer teardownTestCase(t)
 	type args struct {
 		category models.Category
 	}
@@ -447,21 +392,9 @@ func TestCategory_isValidUUIDHook(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.args.category.InsertG(r.ctx, boil.Infer())
+			err := tt.args.category.InsertG(repository.ctx, boil.Infer())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("isValidUUIDCategoryHook() error = %v, wantErr %v", err, tt.wantErr)
 				return

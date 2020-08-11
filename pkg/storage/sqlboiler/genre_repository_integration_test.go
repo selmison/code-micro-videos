@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"reflect"
 	"testing"
 
@@ -14,18 +13,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
-	"github.com/selmison/code-micro-videos/config"
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/pkg/crud"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-var (
-	dbConnStr string
-)
-
 func TestRepository_AddGenre(t *testing.T) {
+	cfg, teardownTestCase, repository, err := setupTestCase(t, nil)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -71,7 +70,7 @@ func TestRepository_AddGenre(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
+	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 		return
@@ -82,7 +81,6 @@ func TestRepository_AddGenre(t *testing.T) {
 		}
 	}()
 	ctx := context.Background()
-	r := NewRepository(ctx, db)
 	err = fakeExistGenre.InsertG(ctx, boil.Infer())
 	if err != nil {
 		t.Errorf("test: insert genre: %s", err)
@@ -90,7 +88,7 @@ func TestRepository_AddGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.AddGenre(tt.args.genreDTO)
+			err := repository.AddGenre(tt.args.genreDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddGenre() error: %v, wantErr %v", err, tt.wantErr)
 				return
@@ -101,12 +99,14 @@ func TestRepository_AddGenre(t *testing.T) {
 			}
 		})
 	}
-	if err := ClearGenresTable(dbConnStr); err != nil {
-		t.Errorf("test: clear genres table: %v", err)
-	}
 }
 
 func TestRepository_GetGenres(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	maximum := len(testdata.FakeGenres)
 	type args struct {
 		limit int
@@ -153,28 +153,9 @@ func TestRepository_GetGenres(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeGenres {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert genre: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.GetGenres(tt.args.limit)
+			got, err := repository.GetGenres(tt.args.limit)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetGenres() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -184,12 +165,14 @@ func TestRepository_GetGenres(t *testing.T) {
 			}
 		})
 	}
-	if err := ClearGenresTable(dbConnStr); err != nil {
-		t.Errorf("test: clear genres table: %v", err)
-	}
 }
 
 func TestRepository_FetchGenre(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -228,28 +211,10 @@ func TestRepository_FetchGenre(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeGenres {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert genre: %s", err)
-			return
-		}
-	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := r.FetchGenre(tt.args.name)
+			got, err := repository.FetchGenre(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchGenre() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -259,12 +224,14 @@ func TestRepository_FetchGenre(t *testing.T) {
 			}
 		})
 	}
-	if err := ClearGenresTable(dbConnStr); err != nil {
-		t.Errorf("test: clear genres table: %v", err)
-	}
 }
 
 func TestRepository_RemoveGenre(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
@@ -295,28 +262,9 @@ func TestRepository_RemoveGenre(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeGenres {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert genre: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.RemoveGenre(tt.args.name)
+			err := repository.RemoveGenre(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RemoveGenre() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -326,12 +274,14 @@ func TestRepository_RemoveGenre(t *testing.T) {
 			}
 		})
 	}
-	if err := ClearGenresTable(dbConnStr); err != nil {
-		t.Errorf("test: clear genres table: %v", err)
-	}
 }
 
 func TestRepository_UpdateGenre(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	const (
 		fakeExistName            = "action"
 		fakeDoesNotExistName     = "fakeDoesNotExistName"
@@ -386,28 +336,9 @@ func TestRepository_UpdateGenre(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
-	for _, g := range testdata.FakeGenres {
-		err = g.InsertG(ctx, boil.Infer())
-		if err != nil {
-			t.Errorf("test: insert genre: %s", err)
-			return
-		}
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := r.UpdateGenre(tt.args.name, tt.args.genreDTO)
+			err := repository.UpdateGenre(tt.args.name, tt.args.genreDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateGenre() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -418,28 +349,30 @@ func TestRepository_UpdateGenre(t *testing.T) {
 			}
 		})
 	}
-	if err := ClearGenresTable(dbConnStr); err != nil {
-		t.Errorf("test: clear genres table: %v", err)
-	}
 }
 
-func ClearGenresTable(dbConnStr string) error {
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-	if _, err := models.Genres().DeleteAll(context.Background(), db, true); err != nil {
-		return err
-	}
-	return nil
-}
+//func ClearGenresTable(cfg.DBConnStr string) error {
+//	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
+//	if err != nil {
+//		return err
+//	}
+//	defer func() {
+//		if err := db.Close(); err != nil {
+//			log.Fatalln(err)
+//		}
+//	}()
+//	if _, err := models.Genres().DeleteAll(context.Background(), db, true); err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func TestGenre_isValidUUIDHook(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(t, nil)
+	if err != nil {
+		t.Errorf("test: failed to open DB: %v\n", err)
+	}
+	defer teardownTestCase(t)
 	type args struct {
 		genre models.Genre
 	}
@@ -472,21 +405,9 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(config.DBDrive, dbConnStr)
-	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	r := NewRepository(ctx, db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.args.genre.InsertG(r.ctx, boil.Infer())
+			err := tt.args.genre.InsertG(repository.ctx, boil.Infer())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("isValidUUIDHook() error = %v, wantErr %v", err, tt.wantErr)
 				return

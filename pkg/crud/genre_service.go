@@ -30,7 +30,13 @@ func (s service) UpdateGenre(name string, genreDTO GenreDTO) error {
 	if err := genreDTO.Validate(); err != nil {
 		return err
 	}
-	return s.r.UpdateGenre(name, genreDTO)
+	if err := s.r.UpdateGenre(name, genreDTO); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("%s: %w", name, logger.ErrNotFound)
+		}
+		return err
+	}
+	return nil
 }
 
 func (s service) AddGenre(genreDTO GenreDTO) error {

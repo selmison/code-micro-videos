@@ -16,7 +16,7 @@ type Repository struct {
 	ctx context.Context
 }
 
-func NewRepository(ctx context.Context, db *sql.DB) Repository {
+func NewRepository(ctx context.Context, db *sql.DB) *Repository {
 	boil.SetDB(db)
 	models.AddCategoryHook(boil.BeforeInsertHook, isValidUUIDCategoryHook)
 	models.AddCategoryHook(boil.BeforeUpdateHook, isValidUUIDCategoryHook)
@@ -25,7 +25,7 @@ func NewRepository(ctx context.Context, db *sql.DB) Repository {
 	models.AddGenreHook(boil.BeforeUpdateHook, isValidUUIDGenreHook)
 	models.AddGenreHook(boil.BeforeUpsertHook, isValidUUIDGenreHook)
 
-	return Repository{ctx}
+	return &Repository{ctx}
 }
 func isValidUUIDCategoryHook(ctx context.Context, exec boil.ContextExecutor, c *models.Category) error {
 	if !isValidUUID(c.ID) {

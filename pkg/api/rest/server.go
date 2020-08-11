@@ -8,13 +8,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/justinas/alice"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/hlog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/selmison/code-micro-videos/config"
 	"github.com/selmison/code-micro-videos/pkg/crud"
@@ -24,11 +21,15 @@ import (
 type server struct {
 	router *httprouter.Router
 	svc    crud.Service
-	log    zerolog.Logger
+	logger *zap.SugaredLogger
 }
 
 func InitApp(ctx context.Context, dbConnStr string) error {
-	db, err := sql.Open(config.DBDrive, dbConnStr)
+	cfg, err := config.NewCFG()
+	if err != nil {
+		return fmt.Errorf("test: failed to get config: %v\n", err)
+	}
+	db, err := sql.Open(cfg.DBDrive, dbConnStr)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func InitApp(ctx context.Context, dbConnStr string) error {
 	}()
 	r := sqlboiler.NewRepository(ctx, db)
 	svc := crud.NewService(r)
-	return initHttpServer(config.AddressServer, svc)
+	return initHttpServer(cfg.AddressServer, svc)
 }
 
 func initHttpServer(address string, crud crud.Service) error {
@@ -51,6 +52,23 @@ func initHttpServer(address string, crud crud.Service) error {
 	return nil
 }
 
+func initLogger() *zap.SugaredLogger {
+	//zapLogger, err := zap.NewDevelopment()
+	devConfig := zap.NewDevelopmentConfig()
+	devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zapLogger, err := devConfig.Build()
+	if err != nil {
+		log.Fatalf("can't initialize zap logger: %v", err)
+	}
+	sugar := zapLogger.Sugar()
+	defer func() {
+		if err := sugar.Sync(); err != nil {
+			//log.Fatalf("can't wrap zap logger with sugar: %v", err)
+		}
+	}()
+	return sugar
+}
+
 func newServer(svc crud.Service) *server {
 	r := httprouter.New()
 	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -58,13 +76,13 @@ func newServer(svc crud.Service) *server {
 			log.Println(err)
 		}
 	})
-	s := &server{router: r, svc: svc}
+	s := &server{router: r, svc: svc, logger: initLogger()}
 	s.routes()
-	s.logger()
 	return s
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.logger.Info(r.Method, r.URL.Path)
 	s.router.ServeHTTP(w, r)
 }
 
@@ -84,50 +102,28 @@ func (s *server) bodyToStruct(w http.ResponseWriter, r *http.Request, dto interf
 	}
 }
 
-func (s *server) logger() http.Handler {
-	logger := zerolog.New(os.Stdout).With().
-		Timestamp().
-		Logger()
-	c := alice.New()
-	c = c.Append(hlog.NewHandler(logger))
-	c = c.Append(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		hlog.FromRequest(r).Info().
-			Str("method", r.Method).
-			Stringer("url", r.URL).
-			Int("status", status).
-			Int("size", size).
-			Dur("duration", duration).
-			Msg("")
-	}))
-	c = c.Append(hlog.RemoteAddrHandler("ip"))
-	c = c.Append(hlog.UserAgentHandler("user_agent"))
-	c = c.Append(hlog.RefererHandler("referer"))
-	c = c.Append(hlog.RequestIDHandler("req_id", "Request-Id"))
-	return c.Then(s)
-}
-
 func (s *server) errBadRequest(w http.ResponseWriter, err error) {
-	s.log.Error().Err(err)
+	s.logger.Info(err)
 	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 }
 
 func (s *server) errInternalServer(w http.ResponseWriter, err error) {
-	s.log.Error().Err(err)
+	s.logger.Error(err)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 func (s *server) errNotFound(w http.ResponseWriter, err error) {
-	s.log.Error().Err(err)
+	s.logger.Info(err)
 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
 
 func (s *server) errUnprocessableEntity(w http.ResponseWriter, err error) {
-	s.log.Error().Err(err)
+	s.logger.Info(err)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 }
 
 func (s *server) errStatusConflict(w http.ResponseWriter, err error) {
-	s.log.Error().Err(err)
+	s.logger.Info(err)
 	http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
 }

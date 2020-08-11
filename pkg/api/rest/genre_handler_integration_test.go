@@ -17,13 +17,13 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-func Test_integration_CategoryCreate(t *testing.T) {
+func Test_integration_GenreCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeCategory := `{"name": "action", "description": "actions films"}`
+	fakeGenre := `{"name": "action", "description": "actions films"}`
 	type request struct {
 		url         string
 		contentType string
@@ -40,11 +40,11 @@ func Test_integration_CategoryCreate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "create a category",
+			name: "create a genre",
 			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories"),
+				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres"),
 				"application/json; charset=UTF-8",
-				strings.NewReader(fakeCategory),
+				strings.NewReader(fakeGenre),
 			},
 			want: response{
 				status: http.StatusCreated,
@@ -57,7 +57,7 @@ func Test_integration_CategoryCreate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := http.Post(tt.req.url, tt.req.contentType, tt.req.body)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetCategories() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetGenres() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != nil {
@@ -77,13 +77,13 @@ func Test_integration_CategoryCreate(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Post_Categories(t *testing.T) {
+func Test_RestApi_Post_Genres(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
 	type request struct {
 		url         string
 		contentType string
@@ -145,13 +145,13 @@ func Test_RestApi_Post_Categories(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Get_Categories(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
+func Test_RestApi_Get_Genres(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
 	type request struct {
 		url         string
 		contentType string
@@ -174,7 +174,7 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(testdata.FakeCategoriesDTO),
+				body:   toJSON(testdata.FakeGenresDTO),
 			},
 			wantErr: false,
 		},
@@ -205,17 +205,17 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Get_Category(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
+func Test_RestApi_Get_Genre(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeCategories[0].Name
+	fakeExistName := testdata.FakeGenres[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
-	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[0]
+	fakeExistGenreDTO := testdata.FakeGenresDTO[0]
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "categories", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
 	}
 	type request struct {
 		url         string
@@ -251,7 +251,7 @@ func Test_RestApi_Get_Category(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(fakeExistCategoryDTO),
+				body:   toJSON(fakeExistGenreDTO),
 			},
 		},
 	}
@@ -281,16 +281,16 @@ func Test_RestApi_Get_Category(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Delete_Category(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
+func Test_RestApi_Delete_Genre(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeCategories[0].Name
+	fakeExistName := testdata.FakeGenres[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "categories", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
 	}
 	type request struct {
 		url         string
@@ -361,16 +361,16 @@ func Test_RestApi_Delete_Category(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Update_Category(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
+func Test_RestApi_Update_Genre(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeCategories[0].Name
+	fakeExistName := testdata.FakeGenres[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "categories", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
 	}
 	type request struct {
 		url         string
