@@ -15,6 +15,12 @@ type Service interface {
 	RemoveCategory(name string) error
 	UpdateCategory(name string, c CategoryDTO) error
 
+	GetCastMembers(limit int) (models.CastMemberSlice, error)
+	FetchCastMember(name string) (models.CastMember, error)
+	AddCastMember(c CastMemberDTO) error
+	RemoveCastMember(name string) error
+	UpdateCastMember(name string, c CastMemberDTO) error
+
 	GetGenres(limit int) (models.GenreSlice, error)
 	FetchGenre(name string) (models.Genre, error)
 	AddGenre(c GenreDTO) error

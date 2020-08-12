@@ -97,7 +97,7 @@ func InitDBContainer(ctx context.Context) (*testcontainers.Container, error) {
 	return &dbContainer, nil
 }
 
-func (c *Config) ContainerTerminate() error {
+func (c *Config) TerminateContainer() error {
 	if err := (*c.container).Terminate(c.ctx); err != nil {
 		return fmt.Errorf("terminate dbContainer: %s", err)
 	}

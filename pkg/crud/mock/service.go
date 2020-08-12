@@ -34,6 +34,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddCastMember mocks base method
+func (m *MockRepository) AddCastMember(arg0 crud.CastMemberDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCastMember", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddCastMember indicates an expected call of AddCastMember
+func (mr *MockRepositoryMockRecorder) AddCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCastMember", reflect.TypeOf((*MockRepository)(nil).AddCastMember), arg0)
+}
+
 // AddCategory mocks base method
 func (m *MockRepository) AddCategory(arg0 crud.CategoryDTO) error {
 	m.ctrl.T.Helper()
@@ -60,6 +74,21 @@ func (m *MockRepository) AddGenre(arg0 crud.GenreDTO) error {
 func (mr *MockRepositoryMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGenre", reflect.TypeOf((*MockRepository)(nil).AddGenre), arg0)
+}
+
+// FetchCastMember mocks base method
+func (m *MockRepository) FetchCastMember(arg0 string) (models.CastMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchCastMember", arg0)
+	ret0, _ := ret[0].(models.CastMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchCastMember indicates an expected call of FetchCastMember
+func (mr *MockRepositoryMockRecorder) FetchCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchCastMember", reflect.TypeOf((*MockRepository)(nil).FetchCastMember), arg0)
 }
 
 // FetchCategory mocks base method
@@ -92,6 +121,21 @@ func (mr *MockRepositoryMockRecorder) FetchGenre(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchGenre", reflect.TypeOf((*MockRepository)(nil).FetchGenre), arg0)
 }
 
+// GetCastMembers mocks base method
+func (m *MockRepository) GetCastMembers(arg0 int) (models.CastMemberSlice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCastMembers", arg0)
+	ret0, _ := ret[0].(models.CastMemberSlice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCastMembers indicates an expected call of GetCastMembers
+func (mr *MockRepositoryMockRecorder) GetCastMembers(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCastMembers", reflect.TypeOf((*MockRepository)(nil).GetCastMembers), arg0)
+}
+
 // GetCategories mocks base method
 func (m *MockRepository) GetCategories(arg0 int) (models.CategorySlice, error) {
 	m.ctrl.T.Helper()
@@ -122,6 +166,20 @@ func (mr *MockRepositoryMockRecorder) GetGenres(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockRepository)(nil).GetGenres), arg0)
 }
 
+// RemoveCastMember mocks base method
+func (m *MockRepository) RemoveCastMember(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveCastMember", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveCastMember indicates an expected call of RemoveCastMember
+func (mr *MockRepositoryMockRecorder) RemoveCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCastMember", reflect.TypeOf((*MockRepository)(nil).RemoveCastMember), arg0)
+}
+
 // RemoveCategory mocks base method
 func (m *MockRepository) RemoveCategory(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -148,6 +206,20 @@ func (m *MockRepository) RemoveGenre(arg0 string) error {
 func (mr *MockRepositoryMockRecorder) RemoveGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGenre", reflect.TypeOf((*MockRepository)(nil).RemoveGenre), arg0)
+}
+
+// UpdateCastMember mocks base method
+func (m *MockRepository) UpdateCastMember(arg0 string, arg1 crud.CastMemberDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCastMember", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateCastMember indicates an expected call of UpdateCastMember
+func (mr *MockRepositoryMockRecorder) UpdateCastMember(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCastMember", reflect.TypeOf((*MockRepository)(nil).UpdateCastMember), arg0, arg1)
 }
 
 // UpdateCategory mocks base method
@@ -201,6 +273,20 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// AddCastMember mocks base method
+func (m *MockService) AddCastMember(arg0 crud.CastMemberDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCastMember", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddCastMember indicates an expected call of AddCastMember
+func (mr *MockServiceMockRecorder) AddCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCastMember", reflect.TypeOf((*MockService)(nil).AddCastMember), arg0)
+}
+
 // AddCategory mocks base method
 func (m *MockService) AddCategory(arg0 crud.CategoryDTO) error {
 	m.ctrl.T.Helper()
@@ -227,6 +313,21 @@ func (m *MockService) AddGenre(arg0 crud.GenreDTO) error {
 func (mr *MockServiceMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGenre", reflect.TypeOf((*MockService)(nil).AddGenre), arg0)
+}
+
+// FetchCastMember mocks base method
+func (m *MockService) FetchCastMember(arg0 string) (models.CastMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchCastMember", arg0)
+	ret0, _ := ret[0].(models.CastMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchCastMember indicates an expected call of FetchCastMember
+func (mr *MockServiceMockRecorder) FetchCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchCastMember", reflect.TypeOf((*MockService)(nil).FetchCastMember), arg0)
 }
 
 // FetchCategory mocks base method
@@ -259,6 +360,21 @@ func (mr *MockServiceMockRecorder) FetchGenre(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchGenre", reflect.TypeOf((*MockService)(nil).FetchGenre), arg0)
 }
 
+// GetCastMembers mocks base method
+func (m *MockService) GetCastMembers(arg0 int) (models.CastMemberSlice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCastMembers", arg0)
+	ret0, _ := ret[0].(models.CastMemberSlice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCastMembers indicates an expected call of GetCastMembers
+func (mr *MockServiceMockRecorder) GetCastMembers(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCastMembers", reflect.TypeOf((*MockService)(nil).GetCastMembers), arg0)
+}
+
 // GetCategories mocks base method
 func (m *MockService) GetCategories(arg0 int) (models.CategorySlice, error) {
 	m.ctrl.T.Helper()
@@ -289,6 +405,20 @@ func (mr *MockServiceMockRecorder) GetGenres(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockService)(nil).GetGenres), arg0)
 }
 
+// RemoveCastMember mocks base method
+func (m *MockService) RemoveCastMember(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveCastMember", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveCastMember indicates an expected call of RemoveCastMember
+func (mr *MockServiceMockRecorder) RemoveCastMember(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCastMember", reflect.TypeOf((*MockService)(nil).RemoveCastMember), arg0)
+}
+
 // RemoveCategory mocks base method
 func (m *MockService) RemoveCategory(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -315,6 +445,20 @@ func (m *MockService) RemoveGenre(arg0 string) error {
 func (mr *MockServiceMockRecorder) RemoveGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGenre", reflect.TypeOf((*MockService)(nil).RemoveGenre), arg0)
+}
+
+// UpdateCastMember mocks base method
+func (m *MockService) UpdateCastMember(arg0 string, arg1 crud.CastMemberDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCastMember", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateCastMember indicates an expected call of UpdateCastMember
+func (mr *MockServiceMockRecorder) UpdateCastMember(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCastMember", reflect.TypeOf((*MockService)(nil).UpdateCastMember), arg0, arg1)
 }
 
 // UpdateCategory mocks base method

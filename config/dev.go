@@ -2,11 +2,9 @@
 
 package config
 
-import (
-	"fmt"
-)
+import "fmt"
 
-var (
+func GetConfig() (*Config, error) {
 	dbConnStr = fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		dbHost,
@@ -16,13 +14,6 @@ var (
 		dbPass,
 		dbSSLMode,
 	)
-)
-
-func NewConfig(addressServer string) *Config {
-	return &Config{AddressServer: addressServer}
-}
-
-func GetConfig() (*Config, error) {
 	return &Config{
 		AddressServer: addressServer,
 		DBDrive:       dbDrive,
