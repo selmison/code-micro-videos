@@ -25,7 +25,7 @@ type server struct {
 }
 
 func InitApp(ctx context.Context, dbConnStr string) error {
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return fmt.Errorf("test: failed to get config: %v\n", err)
 	}
@@ -53,7 +53,6 @@ func initHttpServer(address string, crud crud.Service) error {
 }
 
 func initLogger() *zap.SugaredLogger {
-	//zapLogger, err := zap.NewDevelopment()
 	devConfig := zap.NewDevelopmentConfig()
 	devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	zapLogger, err := devConfig.Build()
@@ -62,9 +61,7 @@ func initLogger() *zap.SugaredLogger {
 	}
 	sugar := zapLogger.Sugar()
 	defer func() {
-		if err := sugar.Sync(); err != nil {
-			//log.Fatalf("can't wrap zap logger with sugar: %v", err)
-		}
+		_ = sugar.Sync()
 	}()
 	return sugar
 }

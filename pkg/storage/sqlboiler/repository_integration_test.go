@@ -15,6 +15,7 @@ import (
 	"github.com/selmison/code-micro-videos/config"
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/testdata"
+	"github.com/selmison/code-micro-videos/testdata/seeds"
 )
 
 func TestMain(m *testing.M) {
@@ -27,11 +28,11 @@ func testMain(m *testing.M) int {
 		return 1
 	}
 	defer teardownTestMain(m)
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return 1
 	}
-	if err := config.InitDB(cfg.DBConnStr); err != nil {
+	if err := seeds.InitDB(cfg.DBDrive, cfg.DBConnStr); err != nil {
 		log.Fatalln("init db: ", err)
 		return 1
 	}
@@ -39,7 +40,7 @@ func testMain(m *testing.M) int {
 }
 
 func setupTestMain() (func(m *testing.M), error) {
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("test: failed to get config: %v\n", err)
 	}
@@ -50,8 +51,8 @@ func setupTestMain() (func(m *testing.M), error) {
 	}, nil
 }
 
-func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), *Repository, error) {
-	cfg, err := config.NewCFG()
+func setupTestCase(fakes interface{}) (*config.Config, func(t *testing.T), *Repository, error) {
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("test: failed to get config: %v", err)
 	}

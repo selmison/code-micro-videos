@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/pkg/api/rest"
 	"github.com/selmison/code-micro-videos/testdata"
+	"github.com/selmison/code-micro-videos/testdata/seeds"
 )
 
 func TestMain(m *testing.M) {
@@ -31,11 +31,11 @@ func testMain(m *testing.M) int {
 		return 1
 	}
 	defer teardownTestCase(m)
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return 1
 	}
-	if err := config.InitDB(cfg.DBConnStr); err != nil {
+	if err := seeds.InitDB(cfg.DBDrive, cfg.DBConnStr); err != nil {
 		log.Fatalln(err, "init db")
 		return 1
 	}
@@ -55,9 +55,9 @@ func testMain(m *testing.M) int {
 }
 
 func setupTestMain() (func(m *testing.M), error) {
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
-		return nil, fmt.Errorf("test: failed to get config: %v\n", err)
+		return nil, fmt.Errorf("test: failed to get config: %v", err)
 	}
 	return func(m *testing.M) {
 		if err := testdata.ClearTables(cfg.DBDrive, cfg.DBConnStr); err != nil {
@@ -67,7 +67,7 @@ func setupTestMain() (func(m *testing.M), error) {
 }
 
 func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), error) {
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		return nil, nil, fmt.Errorf("test: failed to get config: %v", err)
 	}
@@ -107,16 +107,4 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 func toJSON(i interface{}) string {
 	s, _ := json.Marshal(i)
 	return string(s)
-}
-
-// JSONBytesEqual compares the JSON in two byte slices.
-func JSONBytesEqual(a, b []byte) (bool, error) {
-	var j, j2 interface{}
-	if err := json.Unmarshal(a, &j); err != nil {
-		return false, err
-	}
-	if err := json.Unmarshal(b, &j2); err != nil {
-		return false, err
-	}
-	return reflect.DeepEqual(j2, j), nil
 }

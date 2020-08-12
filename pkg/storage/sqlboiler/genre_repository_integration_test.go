@@ -20,7 +20,7 @@ import (
 )
 
 func TestRepository_AddGenre(t *testing.T) {
-	cfg, teardownTestCase, repository, err := setupTestCase(t, nil)
+	cfg, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
@@ -102,7 +102,7 @@ func TestRepository_AddGenre(t *testing.T) {
 }
 
 func TestRepository_GetGenres(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
@@ -168,7 +168,7 @@ func TestRepository_GetGenres(t *testing.T) {
 }
 
 func TestRepository_FetchGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
@@ -227,7 +227,7 @@ func TestRepository_FetchGenre(t *testing.T) {
 }
 
 func TestRepository_RemoveGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
@@ -277,7 +277,7 @@ func TestRepository_RemoveGenre(t *testing.T) {
 }
 
 func TestRepository_UpdateGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(t, testdata.FakeGenres)
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}
@@ -368,7 +368,7 @@ func TestRepository_UpdateGenre(t *testing.T) {
 //}
 
 func TestGenre_isValidUUIDHook(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(t, nil)
+	_, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to open DB: %v\n", err)
 	}

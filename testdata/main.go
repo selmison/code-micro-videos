@@ -38,8 +38,7 @@ var (
 			Name: "romance",
 		},
 	}
-	FakeCategoriesDTO []crud.CategoryDTO
-	FakeGenres        = []models.Genre{
+	FakeGenres = []models.Genre{
 		{
 			ID:   uuid.New().String(),
 			Name: "action",
@@ -65,7 +64,8 @@ var (
 			Name: "romance",
 		},
 	}
-	FakeGenresDTO []crud.GenreDTO
+	FakeCategoriesDTO []crud.CategoryDTO
+	FakeGenresDTO     []crud.GenreDTO
 )
 
 func init() {

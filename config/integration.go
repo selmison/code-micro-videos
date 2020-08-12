@@ -10,25 +10,15 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var once sync.Once
-var singleInstance *Config
+var (
+	once           sync.Once
+	singleInstance *Config
+)
 
-type Config struct {
-	ctx           context.Context
-	Container     *testcontainers.Container
-	AddressServer string
-	DBDrive       string
-	DBName        string
-	DBPort        int
-	DBUser        string
-	DBPass        string
-	DBSSLMode     string
-	DBConnStr     string
-}
-
-func NewCFG() (*Config, error) {
+func GetConfig() (*Config, error) {
 	var e error
 	if singleInstance == nil {
 		once.Do(
@@ -66,13 +56,13 @@ func NewCFG() (*Config, error) {
 				singleInstance = &Config{
 					ctx,
 					dbContainer,
-					"127.0.0.1:3333",
-					"postgres",
-					"code-micro-videos",
-					5432,
-					"postgres",
-					"postgres",
-					"disable",
+					addressServer,
+					dbDrive,
+					dbName,
+					dbPort,
+					dbUser,
+					dbPass,
+					dbSSLMode,
 					dbConnStr,
 				}
 			})
@@ -83,10 +73,33 @@ func NewCFG() (*Config, error) {
 	return singleInstance, nil
 }
 
+func InitDBContainer(ctx context.Context) (*testcontainers.Container, error) {
+	req := testcontainers.ContainerRequest{
+		Image: containerImage,
+		Tmpfs: map[string]string{
+			"/var/lib/postgresql/data": "rw",
+		},
+		Env: map[string]string{
+			"POSTGRES_USER":     dbUser,
+			"POSTGRES_PASSWORD": dbPass,
+			"POSTGRES_DB":       dbName,
+		},
+		ExposedPorts: []string{strconv.Itoa(dbPort)},
+		WaitingFor:   wait.ForLog("database system is ready to accept connections"),
+	}
+	dbContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("init dbContainer: %s\n", err)
+	}
+	return &dbContainer, nil
+}
+
 func (c *Config) ContainerTerminate() error {
-	//cfg = nil
-	//if err := (*c.Container).Terminate(c.ctx); err != nil {
-	//	return fmt.Errorf("terminate dbContainer: %s", err)
-	//}
+	if err := (*c.container).Terminate(c.ctx); err != nil {
+		return fmt.Errorf("terminate dbContainer: %s", err)
+	}
 	return nil
 }

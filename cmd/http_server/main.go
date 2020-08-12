@@ -11,12 +11,11 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	cfg, err := config.NewCFG()
+	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	if err := rest.InitApp(ctx, cfg.DBConnStr); err != nil {
+	if err := rest.InitApp(context.Background(), cfg.DBConnStr); err != nil {
 		log.Fatalln(err)
 	}
 }
