@@ -67,7 +67,7 @@ func Sentence() string {
 	return ""
 }
 
-func InitDB(dbDriver, dbConnStr string) error {
+func ApplyMigrations(dbDriver, dbConnStr string) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: config.ProjectPath + string(os.PathSeparator) + "migrations",
 	}

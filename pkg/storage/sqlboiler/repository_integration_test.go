@@ -32,7 +32,7 @@ func testMain(m *testing.M) int {
 	if err != nil {
 		return 1
 	}
-	if err := seeds.InitDB(cfg.DBDrive, cfg.DBConnStr); err != nil {
+	if err := seeds.ApplyMigrations(cfg.DBDrive, cfg.DBConnStr); err != nil {
 		log.Fatalln("init db: ", err)
 		return 1
 	}
