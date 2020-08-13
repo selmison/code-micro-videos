@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -93,10 +94,18 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 		for _, genre := range v {
 			err = genre.InsertG(ctx, boil.Infer())
 			if err != nil {
-				return nil, nil, fmt.Errorf("test: insert category: %s", err)
+				return nil, nil, fmt.Errorf("test: insert genre: %s", err)
+			}
+		}
+	case []models.CastMember:
+		for _, castMember := range v {
+			err = castMember.InsertG(ctx, boil.Infer())
+			if err != nil {
+				return nil, nil, fmt.Errorf("test: insert cast member: %s", err)
 			}
 		}
 	}
+
 	return cfg, func(t *testing.T) {
 		if err := testdata.ClearTables(cfg.DBDrive, cfg.DBConnStr); err != nil {
 			t.Errorf("test: clear categories table: %v", err)
@@ -104,7 +113,19 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 	}, nil
 }
 
-func toJSON(i interface{}) string {
+// JSONBytesEqual compares the JSON in two byte slices.
+func JSONBytesEqual(a, b []byte) (bool, error) {
+	var j, j2 interface{}
+	if err := json.Unmarshal(a, &j); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(b, &j2); err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(j2, j), nil
+}
+
+func toJSON(i interface{}) []byte {
 	s, _ := json.Marshal(i)
-	return string(s)
+	return s
 }

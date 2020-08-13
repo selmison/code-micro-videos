@@ -1,6 +1,7 @@
 package testdata
 
 import (
+	"github.com/bxcodec/faker/v3"
 	"github.com/google/uuid"
 	"github.com/volatiletech/null/v8"
 
@@ -64,8 +65,41 @@ var (
 			Name: "romance",
 		},
 	}
-	FakeCategoriesDTO []crud.CategoryDTO
-	FakeGenresDTO     []crud.GenreDTO
+	FakeCastMembers = []models.CastMember{
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Actor),
+		},
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Director),
+		},
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Actor),
+		},
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Actor),
+		},
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Director),
+		},
+		{
+			ID:   uuid.New().String(),
+			Name: faker.Name(),
+			Type: int16(crud.Actor),
+		},
+	}
+	FakeCategoriesDTO  []crud.CategoryDTO
+	FakeGenresDTO      []crud.GenreDTO
+	FakeCastMembersDTO []crud.CastMemberDTO
 )
 
 func init() {
@@ -80,6 +114,13 @@ func init() {
 	for i, user := range FakeGenres {
 		FakeGenresDTO[i] = crud.GenreDTO{
 			Name: user.Name,
+		}
+	}
+	FakeCastMembersDTO = make([]crud.CastMemberDTO, len(FakeCastMembers))
+	for i, castMember := range FakeCastMembers {
+		FakeCastMembersDTO[i] = crud.CastMemberDTO{
+			Name: castMember.Name,
+			Type: crud.CastMemberType(castMember.Type),
 		}
 	}
 }

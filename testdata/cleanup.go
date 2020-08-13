@@ -1,11 +1,8 @@
 package testdata
 
 import (
-	"context"
 	"database/sql"
 	"log"
-
-	"github.com/selmison/code-micro-videos/models"
 )
 
 func ClearTables(dbDriver, dbConnStr string) error {
@@ -18,10 +15,13 @@ func ClearTables(dbDriver, dbConnStr string) error {
 			log.Fatalln(err)
 		}
 	}()
-	if _, err := models.Categories().DeleteAll(context.Background(), db); err != nil {
+	if _, err = db.Exec("DELETE FROM categories"); err != nil {
 		return err
 	}
-	if _, err := models.Genres().DeleteAll(context.Background(), db, true); err != nil {
+	if _, err = db.Exec("DELETE FROM genres"); err != nil {
+		return err
+	}
+	if _, err = db.Exec("DELETE FROM cast_members"); err != nil {
 		return err
 	}
 	return nil

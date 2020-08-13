@@ -385,7 +385,7 @@ func Test_service_FetchCategory(t *testing.T) {
 					)
 			} else {
 				mockR.EXPECT().
-					FetchCategory(tt.args.name).
+					FetchCategory(strings.ToLower(tt.args.name)).
 					Return(
 						models.Category{},
 						sql.ErrNoRows,

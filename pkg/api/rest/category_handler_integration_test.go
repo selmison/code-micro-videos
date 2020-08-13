@@ -3,6 +3,7 @@
 package rest_test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,7 +21,7 @@ import (
 func Test_integration_CategoryCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeCategory := `{"name": "action", "description": "actions films"}`
@@ -80,7 +81,7 @@ func Test_integration_CategoryCreate(t *testing.T) {
 func Test_RestApi_Post_Categories(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
@@ -148,7 +149,7 @@ func Test_RestApi_Post_Categories(t *testing.T) {
 func Test_RestApi_Get_Categories(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
@@ -158,7 +159,7 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 	}
 	type response struct {
 		status int
-		body   string
+		body   []byte
 	}
 	tests := []struct {
 		name    string
@@ -196,9 +197,8 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				data := strings.TrimSpace(string(bs))
-				if data != tt.want.body {
-					t.Errorf("\nresponse: %v\nwant: %v", data, tt.want.body)
+				if bytes.Equal(bs, tt.want.body) {
+					t.Errorf("\nbody: %v\nwant: %v", string(bs), string(tt.want.body))
 				}
 			}
 		})
@@ -208,7 +208,7 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 func Test_RestApi_Get_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name
@@ -223,7 +223,7 @@ func Test_RestApi_Get_Category(t *testing.T) {
 	}
 	type response struct {
 		status int
-		body   string
+		body   []byte
 	}
 	tests := []struct {
 		name    string
@@ -239,7 +239,7 @@ func Test_RestApi_Get_Category(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusNotFound,
-				body:   "Not Found",
+				body:   toJSON("Not Found"),
 			},
 			wantErr: false,
 		},
@@ -272,9 +272,8 @@ func Test_RestApi_Get_Category(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				data := strings.TrimSpace(string(bs))
-				if data != tt.want.body {
-					t.Errorf("\nbody: %v\nwant: %v", data, tt.want.body)
+				if bytes.Equal(bs, tt.want.body) {
+					t.Errorf("\nbody: %v\nwant: %v", string(bs), string(tt.want.body))
 				}
 			}
 		})
@@ -284,7 +283,7 @@ func Test_RestApi_Get_Category(t *testing.T) {
 func Test_RestApi_Delete_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name
@@ -364,7 +363,7 @@ func Test_RestApi_Delete_Category(t *testing.T) {
 func Test_RestApi_Update_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name

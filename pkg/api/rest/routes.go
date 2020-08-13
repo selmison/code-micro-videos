@@ -60,6 +60,31 @@ func (s *server) routes() {
 			"/genres/:name",
 			s.handleGenreDelete(),
 		},
+		{
+			"GET",
+			"/cast_members",
+			s.handleCastMembersGet(),
+		},
+		{
+			"GET",
+			"/cast_members/:name",
+			s.handleCastMemberGet(),
+		},
+		{
+			"POST",
+			"/cast_members",
+			s.handleCastMemberCreate(),
+		},
+		{
+			"PUT",
+			"/cast_members/:name",
+			s.handleCastMemberUpdate(),
+		},
+		{
+			"DELETE",
+			"/cast_members/:name",
+			s.handleCastMemberDelete(),
+		},
 	}
 
 	for _, route := range routes {

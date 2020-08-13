@@ -19,7 +19,7 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-func TestRepository_AddGenre(t *testing.T) {
+func TestRepository_AddCastMember(t *testing.T) {
 	cfg, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
@@ -30,16 +30,16 @@ func TestRepository_AddGenre(t *testing.T) {
 		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
 	)
-	fakeExistGenre := models.Genre{
+	fakeExistCastMember := models.CastMember{
 		ID:   uuid.New().String(),
 		Name: fakeExistName,
 	}
 	type args struct {
-		genreDTO crud.GenreDTO
+		castMemberDTO crud.CastMemberDTO
 	}
 	type returns struct {
-		genre models.Genre
-		err   error
+		castMember models.CastMember
+		err        error
 	}
 	tests := []struct {
 		name    string
@@ -48,22 +48,27 @@ func TestRepository_AddGenre(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When name in GenreDTO already exists",
-			args: args{crud.GenreDTO{
+			name: "When name in CastMemberDTO already exists",
+			args: args{crud.CastMemberDTO{
 				Name: fakeExistName,
 			}},
-			want:    returns{models.Genre{}, fmt.Errorf("name '%s' %w", fakeExistName, logger.ErrAlreadyExists)},
-			wantErr: true,
+			want: returns{
+				models.CastMember{
+					Name: fakeExistName,
+				},
+				nil,
+			},
+			wantErr: false,
 		},
 		{
-			name: "When GenreDTO is right",
+			name: "When CastMemberDTO is right",
 			args: args{
-				crud.GenreDTO{
+				crud.CastMemberDTO{
 					Name: fakeDoesNotExistName,
 				},
 			},
 			want: returns{
-				models.Genre{
+				models.CastMember{
 					Name: fakeDoesNotExistName,
 				},
 				nil,
@@ -82,41 +87,41 @@ func TestRepository_AddGenre(t *testing.T) {
 		}
 	}()
 	ctx := context.Background()
-	err = fakeExistGenre.InsertG(ctx, boil.Infer())
+	err = fakeExistCastMember.InsertG(ctx, boil.Infer())
 	if err != nil {
-		t.Errorf("test: insert genre: %s", err)
+		t.Errorf("test: insert castMember: %s", err)
 		return
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.AddGenre(tt.args.genreDTO)
+			err := repository.AddCastMember(tt.args.castMemberDTO)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddGenre() error: %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddCastMember() error: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(err, tt.want.err) {
-				t.Errorf("AddGenre() got: %v, want: %v", err, tt.want.err)
+				t.Errorf("AddCastMember() got: %v, want: %v", err, tt.want.err)
 				return
 			}
 		})
 	}
 }
 
-func TestRepository_GetGenres(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
+func TestRepository_GetCastMembers(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	maximum := len(testdata.FakeGenres)
+	maximum := len(testdata.FakeCastMembers)
 	type args struct {
 		limit int
 	}
 	type returns struct {
-		genres models.GenreSlice
-		e      error
-		amount int
+		castMembers models.CastMemberSlice
+		e           error
+		amount      int
 	}
 	tests := []struct {
 		name    string
@@ -157,35 +162,35 @@ func TestRepository_GetGenres(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repository.GetGenres(tt.args.limit)
+			got, err := repository.GetCastMembers(tt.args.limit)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetGenres() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetCastMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if len(got) != tt.want.amount {
-				t.Errorf("GetGenres() len(got): %v, want: %d", len(got), tt.want.amount)
+				t.Errorf("GetCastMembers() len(got): %v, want: %d", len(got), tt.want.amount)
 			}
 		})
 	}
 }
 
-func TestRepository_FetchGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
+func TestRepository_FetchCastMember(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	const (
-		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
 	)
 	type args struct {
 		name string
 	}
 	type returns struct {
-		genre models.Genre
-		e     error
+		castMember models.CastMember
+		e          error
 	}
 	tests := []struct {
 		name    string
@@ -197,7 +202,7 @@ func TestRepository_FetchGenre(t *testing.T) {
 			name: "When name is not found",
 			args: args{fakeDoesNotExistName},
 			want: returns{
-				models.Genre{},
+				models.CastMember{},
 				sql.ErrNoRows,
 			},
 			wantErr: true,
@@ -206,7 +211,7 @@ func TestRepository_FetchGenre(t *testing.T) {
 			name: "When name is found",
 			args: args{fakeExistName},
 			want: returns{
-				models.Genre{
+				models.CastMember{
 					Name: fakeExistName,
 				},
 				nil,
@@ -217,27 +222,27 @@ func TestRepository_FetchGenre(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := repository.FetchGenre(tt.args.name)
+			got, err := repository.FetchCastMember(tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FetchGenre() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FetchCastMember() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.Name != tt.want.genre.Name {
-				t.Errorf("FetchGenre() got: %q, want: %q", got.Name, tt.want.genre.Name)
+			if got.Name != tt.want.castMember.Name {
+				t.Errorf("FetchCastMember() got: %q, want: %q", got.Name, tt.want.castMember.Name)
 			}
 		})
 	}
 }
 
-func TestRepository_RemoveGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
+func TestRepository_RemoveCastMember(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	const (
-		fakeExistName        = "action"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
 	)
 	type fields struct {
@@ -268,37 +273,36 @@ func TestRepository_RemoveGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.RemoveGenre(tt.args.name)
+			err := repository.RemoveCastMember(tt.args.name)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RemoveGenre() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("RemoveCastMember() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != tt.want {
-				t.Errorf("RemoveGenre() got: %s, want: %q", err, tt.want)
+				t.Errorf("RemoveCastMember() got: %s, want: %q", err, tt.want)
 			}
 		})
 	}
 }
 
-func TestRepository_UpdateGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
+func TestRepository_UpdateCastMember(t *testing.T) {
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	const (
-		fakeExistName            = "action"
 		fakeDoesNotExistName     = "fakeDoesNotExistName"
-		fakeNewExistName         = "violent"
 		fakeNewDoestNotExistName = "new_action"
 	)
 	type fields struct {
 		ctx context.Context
 	}
 	type args struct {
-		name     string
-		genreDTO crud.GenreDTO
+		name          string
+		castMemberDTO crud.CastMemberDTO
 	}
 	tests := []struct {
 		name    string
@@ -311,7 +315,7 @@ func TestRepository_UpdateGenre(t *testing.T) {
 			name: "When name to update doesn't exist",
 			args: args{
 				fakeDoesNotExistName,
-				crud.GenreDTO{
+				crud.CastMemberDTO{
 					Name: fakeNewDoestNotExistName,
 				},
 			},
@@ -319,21 +323,10 @@ func TestRepository_UpdateGenre(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When name in GenreDTO already exists",
+			name: "When name exists and CastMemberDTO is right",
 			args: args{
 				fakeExistName,
-				crud.GenreDTO{
-					Name: fakeNewExistName,
-				},
-			},
-			want:    fmt.Errorf("%s %w", fakeNewExistName, logger.ErrAlreadyExists),
-			wantErr: true,
-		},
-		{
-			name: "When name exists and GenreDTO is right",
-			args: args{
-				fakeExistName,
-				crud.GenreDTO{
+				crud.CastMemberDTO{
 					Name: fakeNewDoestNotExistName,
 				},
 			},
@@ -343,20 +336,20 @@ func TestRepository_UpdateGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.UpdateGenre(tt.args.name, tt.args.genreDTO)
+			err := repository.UpdateCastMember(tt.args.name, tt.args.castMemberDTO)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UpdateGenre() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("UpdateCastMember() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if !reflect.DeepEqual(err, tt.want) {
-				t.Errorf("UpdateGenre() got: %v, want: %v", err, tt.want)
+				t.Errorf("UpdateCastMember() got: %v, want: %v", err, tt.want)
 			}
 		})
 	}
 }
 
-func TestGenre_isValidUUIDHook(t *testing.T) {
+func TestCastMember_isValidUUIDHook(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
@@ -364,7 +357,7 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 	}
 	defer teardownTestCase(t)
 	type args struct {
-		genre models.Genre
+		castMember models.CastMember
 	}
 	tests := []struct {
 		name    string
@@ -375,7 +368,7 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 		{
 			name: "When UUID is not validated",
 			args: args{
-				models.Genre{
+				models.CastMember{
 					ID:   "fakeUUIDIsNotValidated",
 					Name: faker.FirstName(),
 				},
@@ -386,7 +379,7 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 		{
 			name: "When UUID is validated",
 			args: args{
-				models.Genre{
+				models.CastMember{
 					ID:   uuid.New().String(),
 					Name: faker.FirstName(),
 				},
@@ -397,7 +390,7 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.args.genre.InsertG(repository.ctx, boil.Infer())
+			err := tt.args.castMember.InsertG(repository.ctx, boil.Infer())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("isValidUUIDHook() error = %v, wantErr %v", err, tt.wantErr)
 				return

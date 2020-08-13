@@ -3,7 +3,7 @@
 package rest_test
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,13 +18,13 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-func Test_integration_GenreCreate(t *testing.T) {
+func Test_integration_CastMemberCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeGenre := `{"name": "action", "description": "actions films"}`
+	fakeCastMember := `{"name": "action", "description": "actions films"}`
 	type request struct {
 		url         string
 		contentType string
@@ -41,11 +41,11 @@ func Test_integration_GenreCreate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "create a genre",
+			name: "create a castMember",
 			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres"),
+				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "cast_members"),
 				"application/json; charset=UTF-8",
-				strings.NewReader(fakeGenre),
+				strings.NewReader(fakeCastMember),
 			},
 			want: response{
 				status: http.StatusCreated,
@@ -58,18 +58,16 @@ func Test_integration_GenreCreate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := http.Post(tt.req.url, tt.req.contentType, tt.req.body)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetGenres() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetCastMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != nil {
 				if got.StatusCode != tt.want.status {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
-					return
 				}
 				bs, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
-					return
 				}
 				data := strings.TrimSpace(string(bs))
 				if data != tt.want.body {
@@ -80,13 +78,13 @@ func Test_integration_GenreCreate(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Post_Genres(t *testing.T) {
+func Test_RestApi_Post_CastMembers(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "cast_members")
 	type request struct {
 		url         string
 		contentType string
@@ -148,13 +146,13 @@ func Test_RestApi_Post_Genres(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Get_Genres(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Get_CastMembers(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "cast_members")
 	type request struct {
 		url         string
 		contentType string
@@ -177,7 +175,7 @@ func Test_RestApi_Get_Genres(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(testdata.FakeGenresDTO),
+				body:   toJSON(testdata.FakeCastMembersDTO),
 			},
 			wantErr: false,
 		},
@@ -194,30 +192,35 @@ func Test_RestApi_Get_Genres(t *testing.T) {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
 					return
 				}
-				bs, err := ioutil.ReadAll(got.Body)
+				data, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				if bytes.Equal(bs, tt.want.body) {
-					t.Errorf("\nbody: %v\nwant: %v", string(bs), tt.want.body)
+				comp, err := JSONBytesEqual(data, []byte(tt.want.body))
+				if err != nil {
+					t.Errorf("read body: %v", err)
+					return
+				}
+				if comp {
+					t.Errorf("\nresponse: %v\nwant: %v", data, tt.want.body)
 				}
 			}
 		})
 	}
 }
 
-func Test_RestApi_Get_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Get_CastMember(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
-	fakeExistGenreDTO := testdata.FakeGenresDTO[0]
+	fakeExistCastMemberDTO := testdata.FakeCastMembersDTO[0]
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "cast_members", name)
 	}
 	type request struct {
 		url         string
@@ -253,7 +256,7 @@ func Test_RestApi_Get_Genre(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(fakeExistGenreDTO),
+				body:   toJSON(fakeExistCastMemberDTO),
 			},
 		},
 	}
@@ -274,24 +277,37 @@ func Test_RestApi_Get_Genre(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				if bytes.Equal(bs, tt.want.body) {
-					t.Errorf("\nbody: %v\nwant: %v", string(bs), string(tt.want.body))
+				bodyResponse, err := json.Marshal(bs)
+				if err != nil {
+					t.Errorf("read body: %v", err)
+					return
+				}
+				comp, err := JSONBytesEqual(bodyResponse, []byte(tt.want.body))
+				fmt.Println(bodyResponse)
+				if err != nil {
+					fmt.Println(tt.want.body)
+					t.Errorf("read body: %v", err)
+					return
+				}
+				if comp {
+					data := strings.TrimSpace(string(bs))
+					t.Errorf("\nresponse: %v\nwant: %v", data, tt.want.body)
 				}
 			}
 		})
 	}
 }
 
-func Test_RestApi_Delete_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Delete_CastMember(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "cast_members", name)
 	}
 	type request struct {
 		url         string
@@ -362,16 +378,16 @@ func Test_RestApi_Delete_Genre(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Update_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Update_CastMember(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
+	fakeExistName := testdata.FakeCastMembers[0].Name
 	fakeDoesNotExistName := "doesNotExistName"
 	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "cast_members", name)
 	}
 	type request struct {
 		url         string

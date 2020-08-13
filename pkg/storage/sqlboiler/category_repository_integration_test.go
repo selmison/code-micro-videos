@@ -22,7 +22,7 @@ import (
 func TestRepository_AddCategory(t *testing.T) {
 	cfg, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
@@ -73,7 +73,7 @@ func TestRepository_AddCategory(t *testing.T) {
 	}
 	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer func() {
@@ -107,7 +107,7 @@ func TestRepository_AddCategory(t *testing.T) {
 func TestRepository_GetCategories(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
@@ -174,7 +174,7 @@ func TestRepository_GetCategories(t *testing.T) {
 func TestRepository_FetchCategory(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
@@ -233,7 +233,7 @@ func TestRepository_FetchCategory(t *testing.T) {
 func TestRepository_RemoveCategory(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
@@ -284,7 +284,7 @@ func TestRepository_RemoveCategory(t *testing.T) {
 func TestRepository_UpdateCategory(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
@@ -356,7 +356,7 @@ func TestRepository_UpdateCategory(t *testing.T) {
 func TestCategory_isValidUUIDHook(t *testing.T) {
 	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeCategories)
 	if err != nil {
-		t.Errorf("test: failed to open DB: %v\n", err)
+		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)

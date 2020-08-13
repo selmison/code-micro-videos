@@ -60,6 +60,7 @@ func (s service) GetCategories(limit int) (models.CategorySlice, error) {
 }
 
 func (s service) FetchCategory(name string) (models.Category, error) {
+	name = strings.ToLower(strings.TrimSpace(name))
 	c, err := s.r.FetchCategory(name)
 	if err == sql.ErrNoRows {
 		return models.Category{}, fmt.Errorf("%s: %w", name, logger.ErrNotFound)

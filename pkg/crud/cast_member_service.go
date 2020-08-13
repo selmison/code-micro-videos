@@ -55,6 +55,7 @@ func (s service) GetCastMembers(limit int) (models.CastMemberSlice, error) {
 }
 
 func (s service) FetchCastMember(name string) (models.CastMember, error) {
+	name = strings.TrimSpace(name)
 	c, err := s.r.FetchCastMember(name)
 	if err == sql.ErrNoRows {
 		return models.CastMember{}, fmt.Errorf("%s: %w", name, logger.ErrNotFound)

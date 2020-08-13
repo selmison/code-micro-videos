@@ -74,7 +74,14 @@ func setupTestCase(fakes interface{}) (*config.Config, func(t *testing.T), *Repo
 		for _, genre := range v {
 			err = genre.InsertG(ctx, boil.Infer())
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("test: insert category: %s", err)
+				return nil, nil, nil, fmt.Errorf("test: insert genre: %s", err)
+			}
+		}
+	case []models.CastMember:
+		for _, castMember := range v {
+			err = castMember.InsertG(ctx, boil.Infer())
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("test: insert cast member: %s", err)
 			}
 		}
 	}
