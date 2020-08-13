@@ -5,7 +5,7 @@ package config
 import "fmt"
 
 func GetConfig() (*Config, error) {
-	dbConnStr = fmt.Sprintf(
+	dbConnStr := fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		dbHost,
 		dbPort,
