@@ -18,6 +18,7 @@ type Repository struct {
 
 func NewRepository(ctx context.Context, db *sql.DB) *Repository {
 	boil.SetDB(db)
+
 	models.AddCategoryHook(boil.BeforeInsertHook, isValidUUIDCategoryHook)
 	models.AddCategoryHook(boil.BeforeUpdateHook, isValidUUIDCategoryHook)
 	models.AddCategoryHook(boil.BeforeUpsertHook, isValidUUIDCategoryHook)
@@ -30,24 +31,34 @@ func NewRepository(ctx context.Context, db *sql.DB) *Repository {
 	models.AddCastMemberHook(boil.BeforeUpdateHook, isValidUUIDCastMemberHook)
 	models.AddCastMemberHook(boil.BeforeUpsertHook, isValidUUIDCastMemberHook)
 
+	models.AddVideoHook(boil.BeforeInsertHook, isValidUUIDVideoHook)
+	models.AddVideoHook(boil.BeforeUpdateHook, isValidUUIDVideoHook)
+	models.AddVideoHook(boil.BeforeUpsertHook, isValidUUIDVideoHook)
+
 	return &Repository{ctx}
 }
-func isValidUUIDCategoryHook(ctx context.Context, exec boil.ContextExecutor, c *models.Category) error {
+func isValidUUIDCategoryHook(_ context.Context, _ boil.ContextExecutor, c *models.Category) error {
 	if !isValidUUID(c.ID) {
 		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
 	}
 	return nil
 }
 
-func isValidUUIDGenreHook(ctx context.Context, exec boil.ContextExecutor, g *models.Genre) error {
+func isValidUUIDGenreHook(_ context.Context, _ boil.ContextExecutor, g *models.Genre) error {
 	if !isValidUUID(g.ID) {
 		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
 	}
 	return nil
 }
 
-func isValidUUIDCastMemberHook(ctx context.Context, exec boil.ContextExecutor, c *models.CastMember) error {
+func isValidUUIDCastMemberHook(_ context.Context, _ boil.ContextExecutor, c *models.CastMember) error {
 	if !isValidUUID(c.ID) {
+		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
+	}
+	return nil
+}
+func isValidUUIDVideoHook(_ context.Context, _ boil.ContextExecutor, v *models.Video) error {
+	if !isValidUUID(v.ID) {
 		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
 	}
 	return nil
