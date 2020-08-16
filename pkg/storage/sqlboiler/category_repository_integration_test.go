@@ -84,8 +84,6 @@ func TestRepository_AddCategory(t *testing.T) {
 	ctx := context.Background()
 	err = fakeExistCategory.InsertG(ctx, boil.Infer())
 	if err != nil {
-		fmt.Println(cfg.DBConnStr)
-		fmt.Println("selmison")
 		t.Errorf("test: insert category: %s", err)
 		return
 	}

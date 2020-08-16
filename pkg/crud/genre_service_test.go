@@ -17,6 +17,7 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/crud/mock"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
+	"github.com/selmison/code-micro-videos/testdata"
 )
 
 func TestAddGenre(t *testing.T) {
@@ -98,10 +99,10 @@ func Test_service_RemoveGenre(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
-	indexRandom := rand.Intn(len(seedsArray))
+	indexRandom := rand.Intn(len(testdata.FakeCategories))
 	fakeNames := [2]string{
 		faker.FirstName(),
-		seedsArray[indexRandom].Name,
+		testdata.FakeCategories[indexRandom].Name,
 	}
 	type fields struct {
 		r sqlboiler.Repository

@@ -283,9 +283,7 @@ func Test_RestApi_Get_CastMember(t *testing.T) {
 					return
 				}
 				comp, err := JSONBytesEqual(bodyResponse, []byte(tt.want.body))
-				fmt.Println(bodyResponse)
 				if err != nil {
-					fmt.Println(tt.want.body)
 					t.Errorf("read body: %v", err)
 					return
 				}

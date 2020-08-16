@@ -18,17 +18,8 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/crud/mock"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
-	"github.com/selmison/code-micro-videos/testdata/seeds"
+	"github.com/selmison/code-micro-videos/testdata"
 )
-
-var (
-	seedsArray []seeds.Seed
-)
-
-func init() {
-	faker.SetGenerateUniqueValues(true)
-	seedsArray = seeds.MakeSeeds(10)
-}
 
 func TestAddCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -114,10 +105,10 @@ func Test_service_RemoveCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
-	indexRandom := rand.Intn(len(seedsArray))
+	indexRandom := rand.Intn(len(testdata.FakeCategories))
 	fakeNames := [2]string{
 		faker.FirstName(),
-		seedsArray[indexRandom].Name,
+		testdata.FakeCategories[indexRandom].Name,
 	}
 	type fields struct {
 		r sqlboiler.Repository
@@ -267,15 +258,15 @@ func Test_service_GetCategories(t *testing.T) {
 	fakeCategorySlice := models.CategorySlice{
 		&models.Category{
 			Name:        faker.FirstName(),
-			Description: null.String{String: seeds.Sentence(), Valid: true},
+			Description: null.String{String: faker.Sentence(), Valid: true},
 		},
 		&models.Category{
 			Name:        faker.FirstName(),
-			Description: null.String{String: seeds.Sentence(), Valid: true},
+			Description: null.String{String: "", Valid: true},
 		},
 		&models.Category{
 			Name:        faker.FirstName(),
-			Description: null.String{String: seeds.Sentence(), Valid: true},
+			Description: null.String{String: faker.Sentence(), Valid: true},
 		},
 	}
 	fakeLimit := len(fakeCategorySlice)
@@ -335,10 +326,10 @@ func Test_service_FetchCategory(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
-	indexRandom := rand.Intn(len(seedsArray))
+	indexRandom := rand.Intn(len(testdata.FakeCategories))
 	fakeNames := [2]string{
 		faker.FirstName(),
-		seedsArray[indexRandom].Name,
+		testdata.FakeCategories[indexRandom].Name,
 	}
 	type args struct {
 		name string
