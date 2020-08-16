@@ -71,10 +71,14 @@ var GenreWhere = struct {
 
 // GenreRels is where relationship names are stored.
 var GenreRels = struct {
-}{}
+	Videos string
+}{
+	Videos: "Videos",
+}
 
 // genreR is where relationships are stored.
 type genreR struct {
+	Videos VideoSlice `boil:"Videos" json:"Videos" toml:"Videos" yaml:"Videos"`
 }
 
 // NewStruct creates a new relationship struct
@@ -385,6 +389,312 @@ func (q genreQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 	}
 
 	return count > 0, nil
+}
+
+// Videos retrieves all the video's Videos with an executor.
+func (o *Genre) Videos(mods ...qm.QueryMod) videoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.InnerJoin("\"genre_video\" on \"videos\".\"id\" = \"genre_video\".\"video_id\""),
+		qm.Where("\"genre_video\".\"genre_id\"=?", o.ID),
+	)
+
+	query := Videos(queryMods...)
+	queries.SetFrom(query.Query, "\"videos\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"videos\".*"})
+	}
+
+	return query
+}
+
+// LoadVideos allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (genreL) LoadVideos(ctx context.Context, e boil.ContextExecutor, singular bool, maybeGenre interface{}, mods queries.Applicator) error {
+	var slice []*Genre
+	var object *Genre
+
+	if singular {
+		object = maybeGenre.(*Genre)
+	} else {
+		slice = *maybeGenre.(*[]*Genre)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &genreR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &genreR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.Select("\"videos\".*, \"a\".\"genre_id\""),
+		qm.From("\"videos\""),
+		qm.InnerJoin("\"genre_video\" as \"a\" on \"videos\".\"id\" = \"a\".\"video_id\""),
+		qm.WhereIn("\"a\".\"genre_id\" in ?", args...),
+		qmhelper.WhereIsNull("\"videos\".\"deleted_at\""),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load videos")
+	}
+
+	var resultSlice []*Video
+
+	var localJoinCols []string
+	for results.Next() {
+		one := new(Video)
+		var localJoinCol string
+
+		err = results.Scan(&one.ID, &one.Title, &one.Description, &one.YearLaunched, &one.Opened, &one.Rating, &one.Duration, &one.CreatedAt, &one.UpdatedAt, &one.DeletedAt, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for videos")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice videos")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on videos")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for videos")
+	}
+
+	if len(videoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Videos = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &videoR{}
+			}
+			foreign.R.Genres = append(foreign.R.Genres, object)
+		}
+		return nil
+	}
+
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
+		for _, local := range slice {
+			if local.ID == localJoinCol {
+				local.R.Videos = append(local.R.Videos, foreign)
+				if foreign.R == nil {
+					foreign.R = &videoR{}
+				}
+				foreign.R.Genres = append(foreign.R.Genres, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddVideosG adds the given related objects to the existing relationships
+// of the genre, optionally inserting them as new records.
+// Appends related to o.R.Videos.
+// Sets related.R.Genres appropriately.
+// Uses the global database handle.
+func (o *Genre) AddVideosG(ctx context.Context, insert bool, related ...*Video) error {
+	return o.AddVideos(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// AddVideos adds the given related objects to the existing relationships
+// of the genre, optionally inserting them as new records.
+// Appends related to o.R.Videos.
+// Sets related.R.Genres appropriately.
+func (o *Genre) AddVideos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Video) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		}
+	}
+
+	for _, rel := range related {
+		query := "insert into \"genre_video\" (\"genre_id\", \"video_id\") values ($1, $2)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
+	if o.R == nil {
+		o.R = &genreR{
+			Videos: related,
+		}
+	} else {
+		o.R.Videos = append(o.R.Videos, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &videoR{
+				Genres: GenreSlice{o},
+			}
+		} else {
+			rel.R.Genres = append(rel.R.Genres, o)
+		}
+	}
+	return nil
+}
+
+// SetVideosG removes all previously related items of the
+// genre replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Genres's Videos accordingly.
+// Replaces o.R.Videos with related.
+// Sets related.R.Genres's Videos accordingly.
+// Uses the global database handle.
+func (o *Genre) SetVideosG(ctx context.Context, insert bool, related ...*Video) error {
+	return o.SetVideos(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// SetVideos removes all previously related items of the
+// genre replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Genres's Videos accordingly.
+// Replaces o.R.Videos with related.
+// Sets related.R.Genres's Videos accordingly.
+func (o *Genre) SetVideos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Video) error {
+	query := "delete from \"genre_video\" where \"genre_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	removeVideosFromGenresSlice(o, related)
+	if o.R != nil {
+		o.R.Videos = nil
+	}
+	return o.AddVideos(ctx, exec, insert, related...)
+}
+
+// RemoveVideosG relationships from objects passed in.
+// Removes related items from R.Videos (uses pointer comparison, removal does not keep order)
+// Sets related.R.Genres.
+// Uses the global database handle.
+func (o *Genre) RemoveVideosG(ctx context.Context, related ...*Video) error {
+	return o.RemoveVideos(ctx, boil.GetContextDB(), related...)
+}
+
+// RemoveVideos relationships from objects passed in.
+// Removes related items from R.Videos (uses pointer comparison, removal does not keep order)
+// Sets related.R.Genres.
+func (o *Genre) RemoveVideos(ctx context.Context, exec boil.ContextExecutor, related ...*Video) error {
+	var err error
+	query := fmt.Sprintf(
+		"delete from \"genre_video\" where \"genre_id\" = $1 and \"video_id\" in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
+	for _, rel := range related {
+		values = append(values, rel.ID)
+	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeVideosFromGenresSlice(o, related)
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Videos {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Videos)
+			if ln > 1 && i < ln-1 {
+				o.R.Videos[i] = o.R.Videos[ln-1]
+			}
+			o.R.Videos = o.R.Videos[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+func removeVideosFromGenresSlice(o *Genre, related []*Video) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Genres {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Genres)
+			if ln > 1 && i < ln-1 {
+				rel.R.Genres[i] = rel.R.Genres[ln-1]
+			}
+			rel.R.Genres = rel.R.Genres[:ln-1]
+			break
+		}
+	}
 }
 
 // Genres retrieves all the records using an executor.

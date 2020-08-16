@@ -76,6 +76,20 @@ func (mr *MockRepositoryMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGenre", reflect.TypeOf((*MockRepository)(nil).AddGenre), arg0)
 }
 
+// AddVideo mocks base method
+func (m *MockRepository) AddVideo(arg0 crud.VideoDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddVideo", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddVideo indicates an expected call of AddVideo
+func (mr *MockRepositoryMockRecorder) AddVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVideo", reflect.TypeOf((*MockRepository)(nil).AddVideo), arg0)
+}
+
 // FetchCastMember mocks base method
 func (m *MockRepository) FetchCastMember(arg0 string) (models.CastMember, error) {
 	m.ctrl.T.Helper()
@@ -119,6 +133,21 @@ func (m *MockRepository) FetchGenre(arg0 string) (models.Genre, error) {
 func (mr *MockRepositoryMockRecorder) FetchGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchGenre", reflect.TypeOf((*MockRepository)(nil).FetchGenre), arg0)
+}
+
+// FetchVideo mocks base method
+func (m *MockRepository) FetchVideo(arg0 string) (models.Video, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchVideo", arg0)
+	ret0, _ := ret[0].(models.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchVideo indicates an expected call of FetchVideo
+func (mr *MockRepositoryMockRecorder) FetchVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchVideo", reflect.TypeOf((*MockRepository)(nil).FetchVideo), arg0)
 }
 
 // GetCastMembers mocks base method
@@ -166,6 +195,21 @@ func (mr *MockRepositoryMockRecorder) GetGenres(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockRepository)(nil).GetGenres), arg0)
 }
 
+// GetVideos mocks base method
+func (m *MockRepository) GetVideos(arg0 int) (models.VideoSlice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVideos", arg0)
+	ret0, _ := ret[0].(models.VideoSlice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVideos indicates an expected call of GetVideos
+func (mr *MockRepositoryMockRecorder) GetVideos(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVideos", reflect.TypeOf((*MockRepository)(nil).GetVideos), arg0)
+}
+
 // RemoveCastMember mocks base method
 func (m *MockRepository) RemoveCastMember(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -208,6 +252,20 @@ func (mr *MockRepositoryMockRecorder) RemoveGenre(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGenre", reflect.TypeOf((*MockRepository)(nil).RemoveGenre), arg0)
 }
 
+// RemoveVideo mocks base method
+func (m *MockRepository) RemoveVideo(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveVideo", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveVideo indicates an expected call of RemoveVideo
+func (mr *MockRepositoryMockRecorder) RemoveVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVideo", reflect.TypeOf((*MockRepository)(nil).RemoveVideo), arg0)
+}
+
 // UpdateCastMember mocks base method
 func (m *MockRepository) UpdateCastMember(arg0 string, arg1 crud.CastMemberDTO) error {
 	m.ctrl.T.Helper()
@@ -248,6 +306,20 @@ func (m *MockRepository) UpdateGenre(arg0 string, arg1 crud.GenreDTO) error {
 func (mr *MockRepositoryMockRecorder) UpdateGenre(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGenre", reflect.TypeOf((*MockRepository)(nil).UpdateGenre), arg0, arg1)
+}
+
+// UpdateVideo mocks base method
+func (m *MockRepository) UpdateVideo(arg0 string, arg1 crud.VideoDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateVideo", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateVideo indicates an expected call of UpdateVideo
+func (mr *MockRepositoryMockRecorder) UpdateVideo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVideo", reflect.TypeOf((*MockRepository)(nil).UpdateVideo), arg0, arg1)
 }
 
 // MockService is a mock of Service interface
@@ -315,6 +387,20 @@ func (mr *MockServiceMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGenre", reflect.TypeOf((*MockService)(nil).AddGenre), arg0)
 }
 
+// AddVideo mocks base method
+func (m *MockService) AddVideo(arg0 crud.VideoDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddVideo", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddVideo indicates an expected call of AddVideo
+func (mr *MockServiceMockRecorder) AddVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVideo", reflect.TypeOf((*MockService)(nil).AddVideo), arg0)
+}
+
 // FetchCastMember mocks base method
 func (m *MockService) FetchCastMember(arg0 string) (models.CastMember, error) {
 	m.ctrl.T.Helper()
@@ -358,6 +444,21 @@ func (m *MockService) FetchGenre(arg0 string) (models.Genre, error) {
 func (mr *MockServiceMockRecorder) FetchGenre(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchGenre", reflect.TypeOf((*MockService)(nil).FetchGenre), arg0)
+}
+
+// FetchVideo mocks base method
+func (m *MockService) FetchVideo(arg0 string) (models.Video, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchVideo", arg0)
+	ret0, _ := ret[0].(models.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchVideo indicates an expected call of FetchVideo
+func (mr *MockServiceMockRecorder) FetchVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchVideo", reflect.TypeOf((*MockService)(nil).FetchVideo), arg0)
 }
 
 // GetCastMembers mocks base method
@@ -405,6 +506,21 @@ func (mr *MockServiceMockRecorder) GetGenres(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGenres", reflect.TypeOf((*MockService)(nil).GetGenres), arg0)
 }
 
+// GetVideos mocks base method
+func (m *MockService) GetVideos(arg0 int) (models.VideoSlice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVideos", arg0)
+	ret0, _ := ret[0].(models.VideoSlice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVideos indicates an expected call of GetVideos
+func (mr *MockServiceMockRecorder) GetVideos(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVideos", reflect.TypeOf((*MockService)(nil).GetVideos), arg0)
+}
+
 // RemoveCastMember mocks base method
 func (m *MockService) RemoveCastMember(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -447,6 +563,20 @@ func (mr *MockServiceMockRecorder) RemoveGenre(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGenre", reflect.TypeOf((*MockService)(nil).RemoveGenre), arg0)
 }
 
+// RemoveVideo mocks base method
+func (m *MockService) RemoveVideo(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveVideo", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveVideo indicates an expected call of RemoveVideo
+func (mr *MockServiceMockRecorder) RemoveVideo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVideo", reflect.TypeOf((*MockService)(nil).RemoveVideo), arg0)
+}
+
 // UpdateCastMember mocks base method
 func (m *MockService) UpdateCastMember(arg0 string, arg1 crud.CastMemberDTO) error {
 	m.ctrl.T.Helper()
@@ -487,4 +617,18 @@ func (m *MockService) UpdateGenre(arg0 string, arg1 crud.GenreDTO) error {
 func (mr *MockServiceMockRecorder) UpdateGenre(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGenre", reflect.TypeOf((*MockService)(nil).UpdateGenre), arg0, arg1)
+}
+
+// UpdateVideo mocks base method
+func (m *MockService) UpdateVideo(arg0 string, arg1 crud.VideoDTO) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateVideo", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateVideo indicates an expected call of UpdateVideo
+func (mr *MockServiceMockRecorder) UpdateVideo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVideo", reflect.TypeOf((*MockService)(nil).UpdateVideo), arg0, arg1)
 }

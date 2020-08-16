@@ -26,6 +26,12 @@ type Service interface {
 	AddGenre(c GenreDTO) error
 	RemoveGenre(name string) error
 	UpdateGenre(name string, c GenreDTO) error
+
+	GetVideos(limit int) (models.VideoSlice, error)
+	FetchVideo(name string) (models.Video, error)
+	AddVideo(c VideoDTO) error
+	RemoveVideo(name string) error
+	UpdateVideo(name string, c VideoDTO) error
 }
 
 // NewService creates a crud service with the necessary dependencies

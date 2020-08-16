@@ -3,6 +3,8 @@ module github.com/selmison/code-micro-videos
 go 1.14
 
 require (
+	github.com/Pallinder/go-randomdata v1.2.0
+	github.com/bluele/factory-go v0.0.0-20200430111232-df9c4ffc2e3e
 	github.com/bxcodec/faker/v3 v3.5.0
 	github.com/docker/go-connections v0.4.0
 	github.com/friendsofgo/errors v0.9.2

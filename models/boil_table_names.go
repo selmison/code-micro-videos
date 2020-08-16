@@ -6,11 +6,17 @@ package models
 var TableNames = struct {
 	CastMembers    string
 	Categories     string
+	CategoryVideo  string
+	GenreVideo     string
 	Genres         string
 	GorpMigrations string
+	Videos         string
 }{
 	CastMembers:    "cast_members",
 	Categories:     "categories",
+	CategoryVideo:  "category_video",
+	GenreVideo:     "genre_video",
 	Genres:         "genres",
 	GorpMigrations: "gorp_migrations",
+	Videos:         "videos",
 }
