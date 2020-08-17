@@ -85,6 +85,31 @@ func (s *server) routes() {
 			"/cast_members/:name",
 			s.handleCastMemberDelete(),
 		},
+		{
+			"GET",
+			"/videos",
+			s.handleVideosGet(),
+		},
+		{
+			"GET",
+			"/videos/:title",
+			s.handleVideoGet(),
+		},
+		{
+			"POST",
+			"/videos",
+			s.handleVideoCreate(),
+		},
+		{
+			"PUT",
+			"/videos/:title",
+			s.handleVideoUpdate(),
+		},
+		{
+			"DELETE",
+			"/videos/:title",
+			s.handleVideoDelete(),
+		},
 	}
 
 	for _, route := range routes {

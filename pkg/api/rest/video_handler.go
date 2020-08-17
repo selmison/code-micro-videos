@@ -15,9 +15,9 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s *server) handleCategoryCreate() http.HandlerFunc {
+func (s *server) handleVideoCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		categoryDTO := &crud.CategoryDTO{}
+		videoDTO := &crud.VideoDTO{}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			s.errInternalServer(w, err)
@@ -25,13 +25,13 @@ func (s *server) handleCategoryCreate() http.HandlerFunc {
 		if err := r.Body.Close(); err != nil {
 			s.errInternalServer(w, err)
 		}
-		if err := json.Unmarshal(body, &categoryDTO); err != nil {
+		if err := json.Unmarshal(body, &videoDTO); err != nil {
 			s.errUnprocessableEntity(w, err)
 			if err := json.NewEncoder(w).Encode(err); err != nil {
 				s.errInternalServer(w, err)
 			}
 		}
-		if err := s.svc.AddCategory(*categoryDTO); err != nil {
+		if err := s.svc.AddVideo(*videoDTO); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
 				return
@@ -51,35 +51,39 @@ func (s *server) handleCategoryCreate() http.HandlerFunc {
 	}
 }
 
-func (s *server) handleCategoriesGet() http.HandlerFunc {
+func (s *server) handleVideosGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		categories, err := s.svc.GetCategories(math.MaxInt8)
+		videos, err := s.svc.GetVideos(math.MaxInt8)
 		if err != nil {
 			s.errInternalServer(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		categoriesDTO := make([]crud.CategoryDTO, len(categories))
-		for i, category := range categories {
-			categoriesDTO[i] = crud.CategoryDTO{
-				Name:        category.Name,
-				Description: category.Description.String,
+		videosDTO := make([]crud.VideoDTO, len(videos))
+		for i, video := range videos {
+			videosDTO[i] = crud.VideoDTO{
+				Title:        video.Title,
+				Description:  video.Description,
+				YearLaunched: video.YearLaunched,
+				Opened:       video.Opened.Bool,
+				Rating:       crud.VideoRating(video.Rating),
+				Duration:     video.Duration,
 			}
 		}
-		if err := json.NewEncoder(w).Encode(categoriesDTO); err != nil {
+		if err := json.NewEncoder(w).Encode(videosDTO); err != nil {
 			s.errInternalServer(w, err)
 		}
 	}
 }
 
-func (s *server) handleCategoryGet() http.HandlerFunc {
+func (s *server) handleVideoGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var category models.Category
+		var video models.Video
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
-		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			category, err = s.svc.FetchCategory(categoryName)
+		if videoTitle := params.ByName("title"); strings.TrimSpace(videoTitle) != "" {
+			video, err = s.svc.FetchVideo(videoTitle)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -96,26 +100,30 @@ func (s *server) handleCategoryGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		categoryDTO := crud.CategoryDTO{
-			Name:        category.Name,
-			Description: category.Description.String,
+		videoDTO := crud.VideoDTO{
+			Title:        video.Title,
+			Description:  video.Description,
+			YearLaunched: video.YearLaunched,
+			Opened:       video.Opened.Bool,
+			Rating:       crud.VideoRating(video.Rating),
+			Duration:     video.Duration,
 		}
-		if err := json.NewEncoder(w).Encode(categoryDTO); err != nil {
+		if err := json.NewEncoder(w).Encode(videoDTO); err != nil {
 			s.errInternalServer(w, err)
 		}
 	}
 }
 
-func (s *server) handleCategoryUpdate() http.HandlerFunc {
+func (s *server) handleVideoUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		categoryDTO := &crud.CategoryDTO{}
-		if err := s.bodyToStruct(w, r, categoryDTO); err != nil {
+		videoDTO := &crud.VideoDTO{}
+		if err := s.bodyToStruct(w, r, videoDTO); err != nil {
 			return
 		}
 		params := httprouter.ParamsFromContext(r.Context())
-		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			err = s.svc.UpdateCategory(categoryName, *categoryDTO)
+		if videoTitle := params.ByName("title"); strings.TrimSpace(videoTitle) != "" {
+			err = s.svc.UpdateVideo(videoTitle, *videoDTO)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -133,12 +141,12 @@ func (s *server) handleCategoryUpdate() http.HandlerFunc {
 	}
 }
 
-func (s *server) handleCategoryDelete() http.HandlerFunc {
+func (s *server) handleVideoDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
-		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			err = s.svc.RemoveCategory(categoryName)
+		if videoTitle := params.ByName("title"); strings.TrimSpace(videoTitle) != "" {
+			err = s.svc.RemoveVideo(videoTitle)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)

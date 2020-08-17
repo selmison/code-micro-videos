@@ -22,6 +22,7 @@ func Test_integration_CategoryCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeCategory := `{"name": "action", "description": "actions films"}`
@@ -82,6 +83,7 @@ func Test_RestApi_Post_Categories(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
@@ -150,6 +152,7 @@ func Test_RestApi_Get_Categories(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories")
@@ -209,6 +212,7 @@ func Test_RestApi_Get_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name
@@ -284,6 +288,7 @@ func Test_RestApi_Delete_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name
@@ -364,6 +369,7 @@ func Test_RestApi_Update_Category(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCategories)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCategories[0].Name

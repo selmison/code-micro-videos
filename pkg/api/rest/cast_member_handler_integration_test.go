@@ -22,6 +22,7 @@ func Test_integration_CastMemberCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeCastMember := `{"name": "action", "description": "actions films"}`
@@ -82,6 +83,7 @@ func Test_RestApi_Post_CastMembers(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "cast_members")
@@ -150,6 +152,7 @@ func Test_RestApi_Get_CastMembers(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "cast_members")
@@ -192,18 +195,18 @@ func Test_RestApi_Get_CastMembers(t *testing.T) {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
 					return
 				}
-				data, err := ioutil.ReadAll(got.Body)
+				body, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				comp, err := JSONBytesEqual(data, []byte(tt.want.body))
+				comp, err := JSONBytesEqual(body, tt.want.body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				if comp {
-					t.Errorf("\nresponse: %v\nwant: %v", data, tt.want.body)
+				if !comp {
+					t.Errorf("\nresponse: %v\nwant: %v", string(body), string(tt.want.body))
 				}
 			}
 		})
@@ -214,6 +217,7 @@ func Test_RestApi_Get_CastMember(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCastMembers[0].Name
@@ -272,24 +276,23 @@ func Test_RestApi_Get_CastMember(t *testing.T) {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
 					return
 				}
-				bs, err := ioutil.ReadAll(got.Body)
+				body, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				bodyResponse, err := json.Marshal(bs)
+				bodyResponse, err := json.Marshal(body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				comp, err := JSONBytesEqual(bodyResponse, []byte(tt.want.body))
+				comp, err := JSONBytesEqual(bodyResponse, tt.want.body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
 				if comp {
-					data := strings.TrimSpace(string(bs))
-					t.Errorf("\nresponse: %v\nwant: %v", data, tt.want.body)
+					t.Errorf("\nresponse: %v\nwant: %v", string(bodyResponse), string(tt.want.body))
 				}
 			}
 		})
@@ -300,6 +303,7 @@ func Test_RestApi_Delete_CastMember(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCastMembers[0].Name
@@ -380,6 +384,7 @@ func Test_RestApi_Update_CastMember(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeCastMembers)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
+		return
 	}
 	defer teardownTestCase(t)
 	fakeExistName := testdata.FakeCastMembers[0].Name

@@ -64,6 +64,7 @@ func (s *server) handleCastMembersGet() http.HandlerFunc {
 		for i, castMember := range castMembers {
 			castMembersDTO[i] = crud.CastMemberDTO{
 				Name: castMember.Name,
+				Type: crud.CastMemberType(castMember.Type),
 			}
 		}
 		if err := json.NewEncoder(w).Encode(castMembersDTO); err != nil {
@@ -108,7 +109,9 @@ func (s *server) handleCastMemberUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		castMemberDTO := &crud.CastMemberDTO{}
-		s.bodyToStruct(w, r, castMemberDTO)
+		if err := s.bodyToStruct(w, r, castMemberDTO); err != nil {
+			return
+		}
 		params := httprouter.ParamsFromContext(r.Context())
 		if castMemberName := params.ByName("name"); strings.TrimSpace(castMemberName) != "" {
 			err = s.svc.UpdateCastMember(castMemberName, *castMemberDTO)

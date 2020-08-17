@@ -3,7 +3,7 @@
 package rest_test
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,17 +15,17 @@ import (
 
 	"github.com/bxcodec/faker/v3"
 
+	"github.com/selmison/code-micro-videos/pkg/crud"
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-func Test_integration_GenreCreate(t *testing.T) {
+func Test_integration_VideoCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeGenre := `{"name": "action", "description": "actions films"}`
 	type request struct {
 		url         string
 		contentType string
@@ -42,11 +42,19 @@ func Test_integration_GenreCreate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "create a genre",
+			name: "create a video",
 			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres"),
+				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos"),
 				"application/json; charset=UTF-8",
-				strings.NewReader(fakeGenre),
+				strings.NewReader(fmt.Sprintf(
+					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
+					faker.Name(),
+					faker.Sentence(),
+					2020,
+					false,
+					crud.TenRating,
+					250,
+				)),
 			},
 			want: response{
 				status: http.StatusCreated,
@@ -59,18 +67,16 @@ func Test_integration_GenreCreate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := http.Post(tt.req.url, tt.req.contentType, tt.req.body)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetGenres() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetVideos() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != nil {
 				if got.StatusCode != tt.want.status {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
-					return
 				}
 				bs, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
-					return
 				}
 				data := strings.TrimSpace(string(bs))
 				if data != tt.want.body {
@@ -81,14 +87,14 @@ func Test_integration_GenreCreate(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Post_Genres(t *testing.T) {
+func Test_RestApi_Post_Videos(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos")
 	type request struct {
 		url         string
 		contentType string
@@ -105,16 +111,18 @@ func Test_RestApi_Post_Genres(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When name field is empty",
+			name: "When title field is empty",
 			req: request{
 				fakeUrl,
 				"application/json; charset=UTF-8",
 				strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
+					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
 					"",
-					faker.URL(),
-					faker.Phonenumber(),
 					faker.Sentence(),
+					2020,
+					false,
+					crud.TenRating,
+					250,
 				)),
 			},
 			want: response{
@@ -150,14 +158,14 @@ func Test_RestApi_Post_Genres(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Get_Genres(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Get_Videos(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeVideos)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "genres")
+	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos")
 	type request struct {
 		url         string
 		contentType string
@@ -180,7 +188,7 @@ func Test_RestApi_Get_Genres(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(testdata.FakeGenresDTO),
+				body:   toJSON(testdata.FakeVideosDTO),
 			},
 			wantErr: false,
 		},
@@ -197,31 +205,36 @@ func Test_RestApi_Get_Genres(t *testing.T) {
 					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
 					return
 				}
-				bs, err := ioutil.ReadAll(got.Body)
+				data, err := ioutil.ReadAll(got.Body)
 				if err != nil {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				if bytes.Equal(bs, tt.want.body) {
-					t.Errorf("\nbody: %v\nwant: %v", string(bs), tt.want.body)
+				comp, err := JSONBytesEqual(data, tt.want.body)
+				if err != nil {
+					t.Errorf("read body: %v", err)
+					return
+				}
+				if !comp {
+					t.Errorf("\nresponse: %vwant: %v", string(data), string(tt.want.body))
 				}
 			}
 		})
 	}
 }
 
-func Test_RestApi_Get_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Get_Video(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeVideos)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
+	fakeExistTitle := testdata.FakeVideos[0].Title
 	fakeDoesNotExistName := "doesNotExistName"
-	fakeExistGenreDTO := testdata.FakeGenresDTO[0]
-	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+	fakeExistVideoDTO := testdata.FakeVideosDTO[0]
+	fakeUrl := func(title string) string {
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
 	}
 	type request struct {
 		url         string
@@ -238,7 +251,7 @@ func Test_RestApi_Get_Genre(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When name doesn't exist",
+			name: "When title doesn't exist",
 			req: request{
 				url:         fakeUrl(fakeDoesNotExistName),
 				contentType: "application/json; charset=UTF-8",
@@ -250,14 +263,14 @@ func Test_RestApi_Get_Genre(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When name exists",
+			name: "When title exists",
 			req: request{
-				url:         fakeUrl(fakeExistName),
+				url:         fakeUrl(fakeExistTitle),
 				contentType: "application/json; charset=UTF-8",
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(fakeExistGenreDTO),
+				body:   toJSON(fakeExistVideoDTO),
 			},
 		},
 	}
@@ -278,25 +291,35 @@ func Test_RestApi_Get_Genre(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				if bytes.Equal(bs, tt.want.body) {
-					t.Errorf("\nbody: %v\nwant: %v", string(bs), string(tt.want.body))
+				bodyResponse, err := json.Marshal(bs)
+				if err != nil {
+					t.Errorf("read body: %v", err)
+					return
+				}
+				comp, err := JSONBytesEqual(bodyResponse, tt.want.body)
+				if err != nil {
+					t.Errorf("read body: %v", err)
+					return
+				}
+				if comp {
+					t.Errorf("\nresponse: %vwant: %v", string(bodyResponse), string(tt.want.body))
 				}
 			}
 		})
 	}
 }
 
-func Test_RestApi_Delete_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Delete_Video(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeVideos)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
-	fakeDoesNotExistName := "doesNotExistName"
-	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+	fakeExistTitle := testdata.FakeVideos[0].Title
+	fakeDoesNotExistTitle := "doesNotExistTitle"
+	fakeUrl := func(title string) string {
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
 	}
 	type request struct {
 		url         string
@@ -313,9 +336,9 @@ func Test_RestApi_Delete_Genre(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When name doesn't exist",
+			name: "When title doesn't exist",
 			req: request{
-				url:         fakeUrl(fakeDoesNotExistName),
+				url:         fakeUrl(fakeDoesNotExistTitle),
 				contentType: "application/json; charset=UTF-8",
 			},
 			want: response{
@@ -325,9 +348,9 @@ func Test_RestApi_Delete_Genre(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When name exists",
+			name: "When title exists",
 			req: request{
-				url:         fakeUrl(fakeExistName),
+				url:         fakeUrl(fakeExistTitle),
 				contentType: "application/json; charset=UTF-8",
 			},
 			want: response{
@@ -367,17 +390,17 @@ func Test_RestApi_Delete_Genre(t *testing.T) {
 	}
 }
 
-func Test_RestApi_Update_Genre(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeGenres)
+func Test_RestApi_Update_Video(t *testing.T) {
+	cfg, teardownTestCase, err := setupTestCase(t, testdata.FakeVideos)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistName := testdata.FakeGenres[0].Name
-	fakeDoesNotExistName := "doesNotExistName"
-	fakeUrl := func(name string) string {
-		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "genres", name)
+	fakeExistTitle := testdata.FakeVideos[0].Title
+	fakeDoesNotExistTitle := "doesNotExistTitle"
+	fakeUrl := func(title string) string {
+		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
 	}
 	type request struct {
 		url         string
@@ -395,13 +418,18 @@ func Test_RestApi_Update_Genre(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When name doesn't exist",
+			name: "When title doesn't exist",
 			req: request{
-				url:         fakeUrl(fakeDoesNotExistName),
+				url:         fakeUrl(fakeDoesNotExistTitle),
 				contentType: "application/json; charset=UTF-8",
 				body: strings.NewReader(fmt.Sprintf(
-					`{"name": "%s"}`,
+					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
 					faker.Name(),
+					faker.Sentence(),
+					2020,
+					false,
+					crud.TenRating,
+					250,
 				)),
 			},
 			want: response{
@@ -411,16 +439,18 @@ func Test_RestApi_Update_Genre(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When name exists",
+			name: "When title exists",
 			req: request{
-				url:         fakeUrl(fakeExistName),
+				url:         fakeUrl(fakeExistTitle),
 				contentType: "application/json; charset=UTF-8",
 				body: strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
-					faker.Name(),
-					faker.URL(),
-					faker.Phonenumber(),
+					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
 					faker.Sentence(),
+					faker.Sentence(),
+					2020,
+					false,
+					crud.TenRating,
+					250,
 				)),
 			},
 			want: response{

@@ -108,7 +108,9 @@ func (s *server) handleGenreUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		genreDTO := &crud.GenreDTO{}
-		s.bodyToStruct(w, r, genreDTO)
+		if err := s.bodyToStruct(w, r, genreDTO); err != nil {
+			return
+		}
 		params := httprouter.ParamsFromContext(r.Context())
 		if genreName := params.ByName("name"); strings.TrimSpace(genreName) != "" {
 			err = s.svc.UpdateGenre(genreName, *genreDTO)

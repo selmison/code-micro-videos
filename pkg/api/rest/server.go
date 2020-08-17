@@ -83,20 +83,25 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *server) bodyToStruct(w http.ResponseWriter, r *http.Request, dto interface{}) {
+func (s *server) bodyToStruct(w http.ResponseWriter, r *http.Request, dto interface{}) error {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		s.errInternalServer(w, err)
+		return err
 	}
 	if err := r.Body.Close(); err != nil {
 		s.errInternalServer(w, err)
+		return err
 	}
 	if err := json.Unmarshal(bytes, &dto); err != nil {
 		s.errUnprocessableEntity(w, err)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
 			s.errInternalServer(w, err)
+			return err
 		}
+		return err
 	}
+	return nil
 }
 
 func (s *server) errBadRequest(w http.ResponseWriter, err error) {

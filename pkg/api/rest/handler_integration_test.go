@@ -104,6 +104,13 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 				return nil, nil, fmt.Errorf("test: insert cast member: %s", err)
 			}
 		}
+	case []models.Video:
+		for _, video := range v {
+			err = video.InsertG(ctx, boil.Infer())
+			if err != nil {
+				return nil, nil, fmt.Errorf("test: insert video: %s", err)
+			}
+		}
 	}
 
 	return cfg, func(t *testing.T) {

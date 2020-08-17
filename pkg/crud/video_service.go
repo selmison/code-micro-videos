@@ -23,16 +23,16 @@ func (s service) RemoveVideo(name string) error {
 	return nil
 }
 
-func (s service) UpdateVideo(name string, videoDTO VideoDTO) error {
-	if len(strings.TrimSpace(name)) == 0 {
-		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
+func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
+	if len(strings.TrimSpace(title)) == 0 {
+		return fmt.Errorf("'title' %w", logger.ErrIsRequired)
 	}
 	if err := videoDTO.Validate(); err != nil {
 		return err
 	}
-	if err := s.r.UpdateVideo(name, videoDTO); err != nil {
+	if err := s.r.UpdateVideo(title, videoDTO); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("%s: %w", name, logger.ErrNotFound)
+			return fmt.Errorf("%s: %w", title, logger.ErrNotFound)
 		}
 		return err
 	}
