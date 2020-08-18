@@ -12,40 +12,6 @@ import (
 )
 
 var (
-	VideoFactory = factory.NewFactory(
-		&models.Video{},
-	).Attr("ID", func(args factory.Args) (interface{}, error) {
-		return uuid.New().String(), nil
-	}).Attr("Title", func(args factory.Args) (interface{}, error) {
-		return randomdata.FullName(randomdata.RandomGender), nil
-	}).Attr("Description", func(args factory.Args) (interface{}, error) {
-		return randomdata.Paragraph(), nil
-	}).Attr("YearLaunched", func(args factory.Args) (interface{}, error) {
-		return int16(randomdata.Number(1900, 2030)), nil
-	}).Attr("Opened", func(args factory.Args) (interface{}, error) {
-		return null.BoolFrom(randomdata.Boolean()), nil
-	}).Attr("Rating", func(args factory.Args) (interface{}, error) {
-		return func() int16 {
-			switch randomdata.Number(6) {
-			case 0:
-				return int16(crud.FreeRating)
-			case 1:
-				return int16(crud.TenRating)
-			case 2:
-				return int16(crud.TwelveRating)
-			case 3:
-				return int16(crud.FourteenRating)
-			case 4:
-				return int16(crud.SixteenRating)
-			case 5:
-				return int16(crud.EighteenRating)
-			default:
-				return int16(crud.FreeRating)
-			}
-		}(), nil
-	}).Attr("Duration", func(args factory.Args) (interface{}, error) {
-		return int16(randomdata.Number(1, 300)), nil
-	})
 	FakeCategories = []models.Category{
 		{
 			ID:          uuid.New().String(),
@@ -133,20 +99,18 @@ var (
 			Type: int16(crud.Actor),
 		},
 	}
-	FakeVideos         []models.Video
 	FakeCategoriesDTO  []crud.CategoryDTO
 	FakeGenresDTO      []crud.GenreDTO
 	FakeCastMembersDTO []crud.CastMemberDTO
-	FakeVideosDTO      []crud.VideoDTO
-	FakeVideoSlice     models.VideoSlice
+
+	FakeVideos     []models.Video
+	FakeVideosDTO  []crud.VideoDTO
+	FakeVideoSlice models.VideoSlice
 )
 
 func init() {
-	length := 10
-	FakeVideos = make([]models.Video, length)
-	for i := 0; i < length; i++ {
-		FakeVideos[i] = *(VideoFactory.MustCreate().(*models.Video))
-	}
+	const length = 10
+	FakeVideos, FakeVideosDTO, FakeVideoSlice = generateFakeVideos(length)
 	FakeCategoriesDTO = make([]crud.CategoryDTO, len(FakeCategories))
 	for i, category := range FakeCategories {
 		FakeCategoriesDTO[i] = crud.CategoryDTO{
@@ -167,9 +131,50 @@ func init() {
 			Type: crud.CastMemberType(castMember.Type),
 		}
 	}
-	FakeVideosDTO = make([]crud.VideoDTO, len(FakeVideos))
-	for i, video := range FakeVideos {
-		FakeVideosDTO[i] = crud.VideoDTO{
+}
+
+func generateFakeVideos(length int) ([]models.Video, []crud.VideoDTO, models.VideoSlice) {
+	videoFactory := factory.NewFactory(
+		&models.Video{},
+	).Attr("ID", func(args factory.Args) (interface{}, error) {
+		return uuid.New().String(), nil
+	}).Attr("Title", func(args factory.Args) (interface{}, error) {
+		return randomdata.FullName(randomdata.RandomGender), nil
+	}).Attr("Description", func(args factory.Args) (interface{}, error) {
+		return randomdata.Paragraph(), nil
+	}).Attr("YearLaunched", func(args factory.Args) (interface{}, error) {
+		return int16(randomdata.Number(1900, 2030)), nil
+	}).Attr("Opened", func(args factory.Args) (interface{}, error) {
+		return null.BoolFrom(randomdata.Boolean()), nil
+	}).Attr("Rating", func(args factory.Args) (interface{}, error) {
+		return func() int16 {
+			switch randomdata.Number(6) {
+			case 0:
+				return int16(crud.FreeRating)
+			case 1:
+				return int16(crud.TenRating)
+			case 2:
+				return int16(crud.TwelveRating)
+			case 3:
+				return int16(crud.FourteenRating)
+			case 4:
+				return int16(crud.SixteenRating)
+			case 5:
+				return int16(crud.EighteenRating)
+			default:
+				return int16(crud.FreeRating)
+			}
+		}(), nil
+	}).Attr("Duration", func(args factory.Args) (interface{}, error) {
+		return int16(randomdata.Number(1, 300)), nil
+	})
+	fakeVideos := make([]models.Video, length)
+	for i := 0; i < length; i++ {
+		fakeVideos[i] = *(videoFactory.MustCreate().(*models.Video))
+	}
+	fakeVideosDTO := make([]crud.VideoDTO, length)
+	for i, video := range fakeVideos {
+		fakeVideosDTO[i] = crud.VideoDTO{
 			Title:        video.Title,
 			Description:  video.Description,
 			YearLaunched: video.YearLaunched,
@@ -178,9 +183,9 @@ func init() {
 			Duration:     video.Duration,
 		}
 	}
-	FakeVideoSlice = make([]*models.Video, len(FakeVideos))
-	for i, video := range FakeVideos {
-		FakeVideoSlice[i] = &models.Video{
+	fakeVideoSlice := make([]*models.Video, length)
+	for i, video := range fakeVideos {
+		fakeVideoSlice[i] = &models.Video{
 			Title:        video.Title,
 			Description:  video.Description,
 			YearLaunched: video.YearLaunched,
@@ -189,5 +194,5 @@ func init() {
 			Duration:     video.Duration,
 		}
 	}
-
+	return fakeVideos, fakeVideosDTO, fakeVideoSlice
 }
