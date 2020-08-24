@@ -20,24 +20,44 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
+var (
+	fakeYearLaunched       = new(int16)
+	fakeDuration           = new(int16)
+	fakeRating             = new(crud.VideoRating)
+	fakeNotValidatedRating = new(crud.VideoRating)
+)
+
 func TestAddVideo(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
+	const (
+		fakeOpened     = false
+		fakeGenreIndex = 0
+	)
 	fakeTitle := faker.Name()
 	fakeDesc := faker.Sentence()
-	const (
-		fakeYearLaunched int16 = 2020
-		fakeOpened             = false
-		fakeRating             = crud.TwelveRating
-		fakeDuration     int16 = 90
-	)
+	*fakeYearLaunched = 2020
+	*fakeDuration = 90
+	*fakeRating = crud.TwelveRating
+	*fakeNotValidatedRating = 111
+	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenre := testdata.FakeGenres[fakeGenreIndex]
+	fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
+	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[0]
+	fakeExistCategory := testdata.FakeCategories[fakeGenreIndex]
+	fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
 	type fields struct {
 		r sqlboiler.Repository
 	}
+	type videoR struct {
+		categories []models.Category
+		genres     []models.Genre
+	}
 	type returns struct {
-		video models.Video
-		err   error
+		video  models.Video
+		videoR videoR
+		err    error
 	}
 	type args struct {
 		dto crud.VideoDTO
@@ -52,25 +72,98 @@ func TestAddVideo(t *testing.T) {
 		{
 			name:    "When VideoDTO is not provided",
 			args:    args{crud.VideoDTO{}},
-			want:    returns{models.Video{}, logger.ErrIsRequired},
+			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
-			name: "When the title in VideoDTO is blank",
+			name: "When the Title in VideoDTO is blank",
 			args: args{crud.VideoDTO{
-				Title: "    ",
+				Title:        "    ",
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     fakeDuration,
 			}},
-			want:    returns{models.Video{}, logger.ErrIsRequired},
+			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
-			name: "When video rating in VideoDTO is not validated",
+			name: "When the YearLaunched in VideoDTO is blank",
 			args: args{crud.VideoDTO{
-				Title:  fakeTitle,
-				Rating: 111,
+				Title:        fakeTitle,
+				YearLaunched: nil,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     fakeDuration,
 			}},
-			want:    returns{models.Video{}, logger.ErrIsNotValidated},
+			want:    returns{video: models.Video{}, err: fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired)},
 			wantErr: true,
+		},
+		{
+			name: "When the Rating in VideoDTO is blank",
+			args: args{crud.VideoDTO{
+				Title:        fakeTitle,
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       nil,
+				Duration:     fakeDuration,
+			}},
+			want:    returns{video: models.Video{}, err: fmt.Errorf("'Rating' field %w", logger.ErrIsRequired)},
+			wantErr: true,
+		},
+		{
+			name: "When the Duration in VideoDTO is blank",
+			args: args{crud.VideoDTO{
+				Title:        fakeTitle,
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     nil,
+			}},
+			want:    returns{video: models.Video{}, err: fmt.Errorf("'Duration' field %w", logger.ErrIsRequired)},
+			wantErr: true,
+		},
+		{
+			name: "When VideoDTO with wrong categories and genres",
+			args: args{crud.VideoDTO{
+				Title:        fakeTitle,
+				Description:  fakeDesc,
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     fakeDuration,
+				Genres:       []crud.GenreDTO{fakeDoesNotExistGenre},
+				Categories:   []crud.CategoryDTO{fakeDoesNotExistCategory},
+			}},
+			want:    returns{err: logger.ErrIsNotValidated},
+			wantErr: true,
+		},
+		{
+			name: "When VideoDTO is right with categories and genres",
+			args: args{crud.VideoDTO{
+				Title:        fakeTitle,
+				Description:  fakeDesc,
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     fakeDuration,
+				Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+				Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+			}},
+			want: returns{video: models.Video{
+				Title:        fakeTitle,
+				Description:  fakeDesc,
+				Opened:       null.BoolFrom(fakeOpened),
+				YearLaunched: *fakeYearLaunched,
+				Rating:       int16(*fakeRating),
+				Duration:     *fakeDuration,
+			},
+				videoR: videoR{
+					[]models.Category{fakeExistCategory},
+					[]models.Genre{fakeExistGenre},
+				},
+				err: nil},
+			wantErr: false,
 		},
 		{
 			name: "When VideoDTO is right",
@@ -82,20 +175,20 @@ func TestAddVideo(t *testing.T) {
 				Rating:       fakeRating,
 				Duration:     fakeDuration,
 			}},
-			want: returns{models.Video{
+			want: returns{video: models.Video{
 				Title:        fakeTitle,
 				Description:  fakeDesc,
-				YearLaunched: fakeYearLaunched,
+				YearLaunched: *fakeYearLaunched,
 				Opened:       null.BoolFrom(fakeOpened),
-				Rating:       int16(fakeRating),
-				Duration:     fakeDuration,
-			}, nil},
+				Rating:       int16(*fakeRating),
+				Duration:     *fakeDuration,
+			}, err: nil},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.wantErr {
+			if !tt.wantErr || tt.name == "When VideoDTO with wrong categories and genres" {
 				mockR.EXPECT().
 					AddVideo(tt.args.dto).
 					Return(tt.want.err)
@@ -106,8 +199,8 @@ func TestAddVideo(t *testing.T) {
 				t.Errorf("AddVideo() error = '%v', wantErr '%v'", err, tt.wantErr)
 				return
 			}
-			if !errors.Is(err, tt.want.err) {
-				t.Errorf("AddVideo() got = '%v', want '%v'", err, tt.want.err)
+			if err != nil && err.Error() != tt.want.err.Error() {
+				t.Errorf("AddVideo() got: \"%v\", want: \"%v\"", err, tt.want.err)
 			}
 		})
 	}
@@ -258,7 +351,7 @@ func Test_service_GetVideos(t *testing.T) {
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
 	fakeVideoSlice := testdata.FakeVideoSlice
-	fakeLimit := len(fakeVideoSlice)
+	const fakeLimit = testdata.FakeVideosLength
 	type args struct {
 		limit int
 	}
