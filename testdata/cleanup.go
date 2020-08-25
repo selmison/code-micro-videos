@@ -15,6 +15,9 @@ func ClearTables(dbDriver, dbConnStr string) error {
 			log.Fatalln(err)
 		}
 	}()
+	if _, err = db.Exec("DELETE FROM videos"); err != nil {
+		return err
+	}
 	if _, err = db.Exec("DELETE FROM categories"); err != nil {
 		return err
 	}
@@ -22,9 +25,6 @@ func ClearTables(dbDriver, dbConnStr string) error {
 		return err
 	}
 	if _, err = db.Exec("DELETE FROM cast_members"); err != nil {
-		return err
-	}
-	if _, err = db.Exec("DELETE FROM videos"); err != nil {
 		return err
 	}
 	return nil

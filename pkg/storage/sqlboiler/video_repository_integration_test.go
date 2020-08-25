@@ -5,12 +5,15 @@ package sqlboiler
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
@@ -18,6 +21,12 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/crud"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/testdata"
+)
+
+var (
+	fakeYearLaunched = new(int16)
+	fakeDuration     = new(int16)
+	fakeRating       = new(crud.VideoRating)
 )
 
 func TestRepository_AddVideo(t *testing.T) {
@@ -28,19 +37,24 @@ func TestRepository_AddVideo(t *testing.T) {
 	}
 	defer teardownTestCase(t)
 	const (
-		fakeExistTitle        = "action"
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
+		fakeDesc              = "fakeDesc"
+		fakeOpened            = false
+		fakeCategoryIndex     = 0
+		fakeGenreIndex        = 0
 	)
-	fakeExistVideo := models.Video{
-		ID:    uuid.New().String(),
-		Title: fakeExistTitle,
-	}
+	*fakeYearLaunched = 2020
+	*fakeDuration = 90
+	*fakeRating = crud.TwelveRating
+	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
+	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
+	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeDoesNotExistGenreDTO := crud.GenreDTO{Name: faker.FirstName()}
 	type args struct {
 		videoDTO crud.VideoDTO
 	}
 	type returns struct {
-		video models.Video
-		err   error
+		err error
 	}
 	tests := []struct {
 		name    string
@@ -49,31 +63,35 @@ func TestRepository_AddVideo(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When title in VideoDTO already exists",
-			args: args{crud.VideoDTO{
-				Title: fakeExistTitle,
-			}},
-			want: returns{
-				models.Video{
-					Title: fakeExistTitle,
+			name: "When VideoDTO is with wrong categories and genres",
+			args: args{
+				crud.VideoDTO{
+					Title:        fakeDoesNotExistTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
 				},
-				nil,
 			},
-			wantErr: false,
+			want:    returns{logger.ErrIsRequired},
+			wantErr: true,
 		},
 		{
 			name: "When VideoDTO is right",
-			args: args{
-				crud.VideoDTO{
-					Title: fakeDoesNotExistTitle,
-				},
-			},
-			want: returns{
-				models.Video{
-					Title: fakeDoesNotExistTitle,
-				},
-				nil,
-			},
+			args: args{crud.VideoDTO{
+				Title:        fakeDoesNotExistTitle,
+				Description:  fakeDesc,
+				YearLaunched: fakeYearLaunched,
+				Opened:       fakeOpened,
+				Rating:       fakeRating,
+				Duration:     fakeDuration,
+				Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+				Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+			}},
+			want:    returns{nil},
 			wantErr: false,
 		},
 	}
@@ -88,7 +106,14 @@ func TestRepository_AddVideo(t *testing.T) {
 		}
 	}()
 	ctx := context.Background()
-	err = fakeExistVideo.InsertG(ctx, boil.Infer())
+	fakeExistCategory := testdata.FakeCategories[fakeCategoryIndex]
+	err = fakeExistCategory.InsertG(ctx, boil.Infer())
+	if err != nil {
+		t.Errorf("test: insert video: %s", err)
+		return
+	}
+	fakeExistGenre := testdata.FakeGenres[fakeGenreIndex]
+	err = fakeExistGenre.InsertG(ctx, boil.Infer())
 	if err != nil {
 		t.Errorf("test: insert video: %s", err)
 		return
@@ -100,8 +125,10 @@ func TestRepository_AddVideo(t *testing.T) {
 				t.Errorf("AddVideo() error: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(err, tt.want.err) {
-				t.Errorf("AddVideo() got: %v, want: %v", err, tt.want.err)
+			if tt.wantErr {
+				if !errors.Is(err, tt.want.err) {
+					t.Errorf("AddVideo() got: %v, want: %v", err, tt.want.err)
+				}
 				return
 			}
 		})
@@ -115,7 +142,8 @@ func TestRepository_GetVideos(t *testing.T) {
 		return
 	}
 	defer teardownTestCase(t)
-	maximum := len(testdata.FakeVideos)
+	maximum := testdata.FakeVideosLength
+	fakeVideosSlice := testdata.FakeVideoSlice
 	type args struct {
 		limit int
 	}
@@ -145,19 +173,19 @@ func TestRepository_GetVideos(t *testing.T) {
 		{
 			name:    "When limit is less then the maximum",
 			args:    args{maximum - 1},
-			want:    returns{nil, nil, maximum - 1},
+			want:    returns{fakeVideosSlice[:maximum-1], nil, maximum - 1},
 			wantErr: false,
 		},
 		{
 			name:    "When limit is equal the maximum",
 			args:    args{maximum},
-			want:    returns{nil, nil, maximum},
+			want:    returns{fakeVideosSlice, nil, maximum},
 			wantErr: false,
 		},
 		{
 			name:    "When limit is more then the maximum",
 			args:    args{maximum + 1},
-			want:    returns{nil, nil, maximum},
+			want:    returns{fakeVideosSlice, nil, maximum},
 			wantErr: false,
 		},
 	}
@@ -168,9 +196,9 @@ func TestRepository_GetVideos(t *testing.T) {
 				t.Errorf("GetVideos() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if len(got) != tt.want.amount {
-				t.Errorf("GetVideos() len(got): %v, want: %d", len(got), tt.want.amount)
-			}
+			gotRemovedTimes := removeTimes(got)
+			videosRemovedTimes := removeTimes(tt.want.videos)
+			assert.Equal(t, gotRemovedTimes, videosRemovedTimes, "they should be equal")
 		})
 	}
 }
@@ -182,7 +210,7 @@ func TestRepository_FetchVideo(t *testing.T) {
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistTitle := testdata.FakeVideos[0].Title
+	fakeExistVideo := testdata.FakeVideos[0]
 	const (
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
 	)
@@ -210,11 +238,9 @@ func TestRepository_FetchVideo(t *testing.T) {
 		},
 		{
 			name: "When title is found",
-			args: args{fakeExistTitle},
+			args: args{fakeExistVideo.Title},
 			want: returns{
-				models.Video{
-					Title: fakeExistTitle,
-				},
+				fakeExistVideo,
 				nil,
 			},
 			wantErr: false,
@@ -228,9 +254,9 @@ func TestRepository_FetchVideo(t *testing.T) {
 				t.Errorf("FetchVideo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.Title != tt.want.video.Title {
-				t.Errorf("FetchVideo() got: %q, want: %q", got.Title, tt.want.video.Title)
-			}
+			gotRemovedTimes := removeTimes(got)
+			videoRemovedTimes := removeTimes(tt.want.video)
+			assert.Equal(t, gotRemovedTimes, videoRemovedTimes, "they should be equal")
 		})
 	}
 }
@@ -296,7 +322,7 @@ func TestRepository_UpdateVideo(t *testing.T) {
 	fakeExistTitle := testdata.FakeVideos[0].Title
 	const (
 		fakeDoesNotExistTitle     = "fakeDoesNotExistTitle"
-		fakeNewDoestNotExistTitle = "new_action"
+		fakeNewDoestNotExistTitle = "fakeNewDoestNotExistTitle"
 	)
 	type fields struct {
 		ctx context.Context
@@ -342,7 +368,6 @@ func TestRepository_UpdateVideo(t *testing.T) {
 				t.Errorf("UpdateVideo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-
 			if !reflect.DeepEqual(err, tt.want) {
 				t.Errorf("UpdateVideo() got: %v, want: %v", err, tt.want)
 			}
@@ -406,4 +431,57 @@ func TestVideo_isValidUUIDHook(t *testing.T) {
 			}
 		})
 	}
+}
+
+func removeTimes(i interface{}) interface{} {
+	if i == nil || reflect.ValueOf(i).IsZero() {
+		return i
+	}
+	funcRemoveTimes := func(i interface{}) {
+		value := reflect.ValueOf(i)
+		for _, fieldName := range [3]string{"CreatedAt", "DeletedAt", "UpdatedAt"} {
+			field := reflect.Indirect(value).FieldByName(fieldName)
+			if field.IsValid() && !field.IsZero() {
+				field.Set(
+					reflect.ValueOf(null.Time{
+						Time:  time.Time{},
+						Valid: false,
+					}),
+				)
+			}
+		}
+	}
+	switch v := i.(type) {
+	case models.VideoSlice:
+		for _, video := range v {
+			funcRemoveTimes(video)
+			if video.R == nil {
+				continue
+			}
+			for _, g := range video.R.Genres {
+				funcRemoveTimes(g)
+				g.R = nil
+			}
+			for _, c := range video.R.Categories {
+				funcRemoveTimes(c)
+				c.R = nil
+			}
+		}
+		return v
+	case models.Video:
+		funcRemoveTimes(&v)
+		if v.R == nil {
+			return v
+		}
+		for _, c := range v.R.Categories {
+			funcRemoveTimes(c)
+			c.R = nil
+		}
+		for _, g := range v.R.Genres {
+			funcRemoveTimes(g)
+			g.R = nil
+		}
+		return v
+	}
+	return nil
 }

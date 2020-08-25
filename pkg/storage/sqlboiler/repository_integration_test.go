@@ -90,6 +90,20 @@ func setupTestCase(fakes interface{}) (*config.Config, func(t *testing.T), *Repo
 			if err != nil {
 				return nil, nil, nil, fmt.Errorf("test: insert video: %s", err)
 			}
+			err = video.SetCategoriesG(ctx, true, video.R.Categories...)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf(
+					"test: Insert a new slice of categories and assign them to the video: %s",
+					err,
+				)
+			}
+			err = video.SetGenresG(ctx, true, video.R.Genres...)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf(
+					"test: Insert a new slice of genres and assign them to the video: %s",
+					err,
+				)
+			}
 		}
 	}
 	return cfg, func(t *testing.T) {
