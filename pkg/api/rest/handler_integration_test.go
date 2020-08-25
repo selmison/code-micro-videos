@@ -110,6 +110,20 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 			if err != nil {
 				return nil, nil, fmt.Errorf("test: insert video: %s", err)
 			}
+			err = video.SetCategoriesG(ctx, true, video.R.Categories...)
+			if err != nil {
+				return nil, nil, fmt.Errorf(
+					"test: Insert new a group of categories and assign them to the video: %s",
+					err,
+				)
+			}
+			err = video.SetGenresG(ctx, true, video.R.Genres...)
+			if err != nil {
+				return nil, nil, fmt.Errorf(
+					"test: Insert new a group of genres and assign them to the video: %s",
+					err,
+				)
+			}
 		}
 	}
 
