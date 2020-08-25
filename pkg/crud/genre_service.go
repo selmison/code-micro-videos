@@ -11,7 +11,8 @@ import (
 )
 
 func (s service) RemoveGenre(name string) error {
-	if len(strings.TrimSpace(name)) == 0 {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if len(name) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
 	if err := s.r.RemoveGenre(name); err != nil {
@@ -24,12 +25,14 @@ func (s service) RemoveGenre(name string) error {
 }
 
 func (s service) UpdateGenre(name string, genreDTO GenreDTO) error {
-	if len(strings.TrimSpace(name)) == 0 {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if len(name) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
 	if err := genreDTO.Validate(); err != nil {
 		return err
 	}
+	genreDTO.Name = strings.ToLower(strings.TrimSpace(genreDTO.Name))
 	if err := s.r.UpdateGenre(name, genreDTO); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", name, logger.ErrNotFound)
@@ -54,6 +57,7 @@ func (s service) GetGenres(limit int) (models.GenreSlice, error) {
 }
 
 func (s service) FetchGenre(name string) (models.Genre, error) {
+	name = strings.ToLower(strings.TrimSpace(name))
 	c, err := s.r.FetchGenre(name)
 	if err == sql.ErrNoRows {
 		return models.Genre{}, fmt.Errorf("%s: %w", name, logger.ErrNotFound)

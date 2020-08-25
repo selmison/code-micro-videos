@@ -18,7 +18,7 @@ type CategoryDTO struct {
 	Genres      []GenreDTO `json:"genres" validate:"not_blank"`
 }
 
-func MapGenreToDTO(category models.Category) (*CategoryDTO, error) {
+func MapCategoryToDTO(category models.Category) (*CategoryDTO, error) {
 	genreDTOs := make([]GenreDTO, len(category.R.Genres))
 	for i, genre := range category.R.Genres {
 		genreDTOs[i] = GenreDTO{
