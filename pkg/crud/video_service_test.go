@@ -42,22 +42,15 @@ func TestAddVideo(t *testing.T) {
 	*fakeRating = crud.TwelveRating
 	*fakeNotValidatedRating = 111
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-	fakeExistGenre := testdata.FakeGenres[fakeGenreIndex]
 	fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[0]
-	fakeExistCategory := testdata.FakeCategories[fakeGenreIndex]
 	fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
 	type fields struct {
 		r sqlboiler.Repository
 	}
-	type videoR struct {
-		categories []models.Category
-		genres     []models.Genre
-	}
 	type returns struct {
-		video  models.Video
-		videoR videoR
-		err    error
+		video models.Video
+		err   error
 	}
 	type args struct {
 		dto crud.VideoDTO
@@ -124,22 +117,39 @@ func TestAddVideo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When VideoDTO with wrong categories and genres",
-			args: args{crud.VideoDTO{
-				Title:        fakeTitle,
-				Description:  fakeDesc,
-				YearLaunched: fakeYearLaunched,
-				Opened:       fakeOpened,
-				Rating:       fakeRating,
-				Duration:     fakeDuration,
-				Genres:       []crud.GenreDTO{fakeDoesNotExistGenre},
-				Categories:   []crud.CategoryDTO{fakeDoesNotExistCategory},
-			}},
-			want:    returns{err: logger.ErrIsNotValidated},
+			name: "When VideoDTO is with wrong categories and genres",
+			args: args{
+				crud.VideoDTO{
+					Title:        fakeTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeDoesNotExistGenre},
+					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategory},
+				},
+			},
+			want:    returns{err: logger.ErrIsRequired},
 			wantErr: true,
 		},
 		{
-			name: "When VideoDTO is right with categories and genres",
+			name: "When VideoDTO is without categories and genres",
+			args: args{
+				crud.VideoDTO{
+					Title:        fakeTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+				},
+			},
+			want:    returns{err: logger.ErrIsRequired},
+			wantErr: true,
+		},
+		{
+			name: "When VideoDTO is right",
 			args: args{crud.VideoDTO{
 				Title:        fakeTitle,
 				Description:  fakeDesc,
@@ -158,37 +168,13 @@ func TestAddVideo(t *testing.T) {
 				Rating:       int16(*fakeRating),
 				Duration:     *fakeDuration,
 			},
-				videoR: videoR{
-					[]models.Category{fakeExistCategory},
-					[]models.Genre{fakeExistGenre},
-				},
 				err: nil},
-			wantErr: false,
-		},
-		{
-			name: "When VideoDTO is right",
-			args: args{crud.VideoDTO{
-				Title:        fakeTitle,
-				Description:  fakeDesc,
-				YearLaunched: fakeYearLaunched,
-				Opened:       fakeOpened,
-				Rating:       fakeRating,
-				Duration:     fakeDuration,
-			}},
-			want: returns{video: models.Video{
-				Title:        fakeTitle,
-				Description:  fakeDesc,
-				YearLaunched: *fakeYearLaunched,
-				Opened:       null.BoolFrom(fakeOpened),
-				Rating:       int16(*fakeRating),
-				Duration:     *fakeDuration,
-			}, err: nil},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if !tt.wantErr || tt.name == "When VideoDTO with wrong categories and genres" {
+			if !tt.wantErr || tt.name == "When VideoDTO is with wrong categories and genres" {
 				mockR.EXPECT().
 					AddVideo(tt.args.dto).
 					Return(tt.want.err)
