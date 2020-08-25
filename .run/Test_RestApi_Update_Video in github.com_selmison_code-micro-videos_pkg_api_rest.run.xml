@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false"
+                   name="Test_RestApi_Update_Video in github.com/selmison/code-micro-videos/pkg/api/rest"
+                   type="GoTestRunConfiguration" factoryName="Go Test" nameIsGenerated="true">
+        <module name="backend"/>
+        <working_directory value="$PROJECT_DIR$/pkg/api/rest"/>
+        <useCustomBuildTags value="true"/>
+        <framework value="gotest"/>
+        <kind value="PACKAGE"/>
+        <package value="github.com/selmison/code-micro-videos/pkg/api/rest"/>
+        <directory value="$PROJECT_DIR$"/>
+        <filePath value="$PROJECT_DIR$"/>
+        <pattern value="^\QTest_RestApi_Update_Video\E$"/>
+        <method v="2"/>
+    </configuration>
+</component>
