@@ -260,22 +260,20 @@ func Test_service_UpdateVideo(t *testing.T) {
 	const (
 		fakeExistTitle        = "fakeExistTitle"
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
-	)
-	const (
-		fakeOpened        = false
-		fakeCategoryIndex = 0
-		fakeGenreIndex    = 0
+		fakeOpened            = false
+		fakeCategoryIndex     = 0
+		fakeGenreIndex        = 0
 	)
 	fakeTitle := faker.Name()
-	//fakeDesc := faker.Sentence()
+	fakeDescription := faker.Sentence()
 	*fakeYearLaunched = 2020
 	*fakeDuration = 90
 	*fakeRating = crud.TwelveRating
 	*fakeNotValidatedRating = 111
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-	//fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
+	fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
-	//fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
+	fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
 
 	type fields struct {
 		r sqlboiler.Repository
@@ -366,6 +364,40 @@ func Test_service_UpdateVideo(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "When VideoDTO is with wrong categories and genres",
+			args: args{
+				fakeExistTitle,
+				crud.VideoDTO{
+					Title:        fakeTitle,
+					Description:  fakeDescription,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeDoesNotExistGenre},
+					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategory},
+				},
+			},
+			want:    logger.ErrIsRequired,
+			wantErr: true,
+		},
+		{
+			name: "When CategoryDTO is without categories and genres",
+			args: args{
+				fakeExistTitle,
+				crud.VideoDTO{
+					Title:        fakeTitle,
+					Description:  fakeDescription,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+				},
+			},
+			want:    fmt.Errorf("'Categories' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
 			name: "When title is not found",
 			args: args{
 				fakeDoesNotExistTitle,
@@ -402,10 +434,23 @@ func Test_service_UpdateVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "When title is not found" || tt.name == "When title is found and VideoDTO is right" {
-				tt.args.title = strings.ToLower(strings.TrimSpace(tt.args.title))
+			if tt.name == "When the Title in CategoryDTO already exists" ||
+				tt.name == "When VideoDTO is with wrong categories and genres" ||
+				tt.name == "When title is not found" ||
+				tt.name == "When title is found and VideoDTO is right" {
+				dto := crud.VideoDTO{
+					Title:        strings.ToLower(strings.TrimSpace(tt.args.dto.Title)),
+					Description:  tt.args.dto.Description,
+					YearLaunched: tt.args.dto.YearLaunched,
+					Opened:       tt.args.dto.Opened,
+					Rating:       tt.args.dto.Rating,
+					Duration:     tt.args.dto.Duration,
+					Categories:   tt.args.dto.Categories,
+					Genres:       tt.args.dto.Genres,
+				}
+				title := strings.ToLower(strings.TrimSpace(tt.args.title))
 				mockR.EXPECT().
-					UpdateVideo(tt.args.title, tt.args.dto).
+					UpdateVideo(title, dto).
 					Return(tt.want)
 			}
 			s := crud.NewService(mockR)
