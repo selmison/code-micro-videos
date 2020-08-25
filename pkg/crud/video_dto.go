@@ -47,16 +47,16 @@ type VideoDTO struct {
 }
 
 func MapVideoToDTO(video models.Video) (*VideoDTO, error) {
-	categoriesDTO := make([]CategoryDTO, len(video.R.Categories))
+	categoriesDTOs := make([]CategoryDTO, len(video.R.Categories))
 	for i, category := range video.R.Categories {
-		categoriesDTO[i] = CategoryDTO{
+		categoriesDTOs[i] = CategoryDTO{
 			Name:        category.Name,
 			Description: category.Description.String,
 		}
 	}
-	genresDTO := make([]GenreDTO, len(video.R.Genres))
+	genresDTOs := make([]GenreDTO, len(video.R.Genres))
 	for i, genre := range video.R.Genres {
-		genresDTO[i] = GenreDTO{
+		genresDTOs[i] = GenreDTO{
 			Name: genre.Name,
 		}
 	}
@@ -68,8 +68,8 @@ func MapVideoToDTO(video models.Video) (*VideoDTO, error) {
 		Opened:       video.Opened.Bool,
 		Rating:       &rating,
 		Duration:     &video.Duration,
-		Categories:   categoriesDTO,
-		Genres:       genresDTO,
+		Categories:   categoriesDTOs,
+		Genres:       genresDTOs,
 	}
 	if err := dto.Validate(); err != nil {
 		return nil, err
