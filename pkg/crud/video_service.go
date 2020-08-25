@@ -10,13 +10,14 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s service) RemoveVideo(name string) error {
-	if len(strings.TrimSpace(name)) == 0 {
-		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
+func (s service) RemoveVideo(title string) error {
+	title = strings.ToLower(strings.TrimSpace(title))
+	if len(title) == 0 {
+		return fmt.Errorf("'title' %w", logger.ErrIsRequired)
 	}
-	if err := s.r.RemoveVideo(name); err != nil {
+	if err := s.r.RemoveVideo(title); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("%s: %w", name, logger.ErrNotFound)
+			return fmt.Errorf("%s: %w", title, logger.ErrNotFound)
 		}
 		return err
 	}
@@ -24,7 +25,8 @@ func (s service) RemoveVideo(name string) error {
 }
 
 func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
-	if len(strings.TrimSpace(title)) == 0 {
+	title = strings.ToLower(strings.TrimSpace(title))
+	if len(title) == 0 {
 		return fmt.Errorf("'title' %w", logger.ErrIsRequired)
 	}
 	if err := videoDTO.Validate(); err != nil {
@@ -40,6 +42,7 @@ func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
 }
 
 func (s service) AddVideo(videoDTO VideoDTO) error {
+	videoDTO.Title = strings.ToLower(strings.TrimSpace(videoDTO.Title))
 	if err := videoDTO.Validate(); err != nil {
 		return err
 	}
@@ -53,13 +56,13 @@ func (s service) GetVideos(limit int) (models.VideoSlice, error) {
 	return s.r.GetVideos(limit)
 }
 
-func (s service) FetchVideo(name string) (models.Video, error) {
-	name = strings.TrimSpace(name)
-	c, err := s.r.FetchVideo(name)
+func (s service) FetchVideo(title string) (models.Video, error) {
+	title = strings.ToLower(strings.TrimSpace(title))
+	c, err := s.r.FetchVideo(title)
 	if err == sql.ErrNoRows {
-		return models.Video{}, fmt.Errorf("%s: %w", name, logger.ErrNotFound)
+		return models.Video{}, fmt.Errorf("%s: %w", title, logger.ErrNotFound)
 	} else if err != nil {
-		return models.Video{}, fmt.Errorf("%s: %w", name, logger.ErrInternalApplication)
+		return models.Video{}, fmt.Errorf("%s: %w", title, logger.ErrInternalApplication)
 	}
 
 	return c, nil
