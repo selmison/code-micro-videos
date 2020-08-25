@@ -2,14 +2,15 @@ package crud_test
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/volatiletech/null/v8"
 
 	"github.com/selmison/code-micro-videos/models"
@@ -89,7 +90,7 @@ func TestAddVideo(t *testing.T) {
 				Rating:       fakeRating,
 				Duration:     fakeDuration,
 			}},
-			want:    returns{video: models.Video{}, err: fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired)},
+			want:    returns{err: fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -101,7 +102,7 @@ func TestAddVideo(t *testing.T) {
 				Rating:       nil,
 				Duration:     fakeDuration,
 			}},
-			want:    returns{video: models.Video{}, err: fmt.Errorf("'Rating' field %w", logger.ErrIsRequired)},
+			want:    returns{err: fmt.Errorf("'Rating' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -113,7 +114,7 @@ func TestAddVideo(t *testing.T) {
 				Rating:       fakeRating,
 				Duration:     nil,
 			}},
-			want:    returns{video: models.Video{}, err: fmt.Errorf("'Duration' field %w", logger.ErrIsRequired)},
+			want:    returns{err: fmt.Errorf("'Duration' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -145,7 +146,7 @@ func TestAddVideo(t *testing.T) {
 					Duration:     fakeDuration,
 				},
 			},
-			want:    returns{err: logger.ErrIsRequired},
+			want:    returns{err: fmt.Errorf("'Categories' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -175,6 +176,7 @@ func TestAddVideo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr || tt.name == "When VideoDTO is with wrong categories and genres" {
+				tt.args.dto.Title = strings.ToLower(strings.TrimSpace(tt.args.dto.Title))
 				mockR.EXPECT().
 					AddVideo(tt.args.dto).
 					Return(tt.want.err)
@@ -210,7 +212,7 @@ func Test_service_RemoveVideo(t *testing.T) {
 		{
 			name:    "When title is blank",
 			args:    args{"     "},
-			want:    fmt.Errorf("'name' %w", logger.ErrIsRequired),
+			want:    fmt.Errorf("'title' %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
@@ -229,6 +231,7 @@ func Test_service_RemoveVideo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "When title is not found" {
+				tt.args.title = strings.ToLower(strings.ToLower(tt.args.title))
 				mockR.EXPECT().
 					RemoveVideo(tt.args.title).
 					Return(tt.want)
@@ -258,6 +261,22 @@ func Test_service_UpdateVideo(t *testing.T) {
 		fakeExistTitle        = "fakeExistTitle"
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
 	)
+	const (
+		fakeOpened        = false
+		fakeCategoryIndex = 0
+		fakeGenreIndex    = 0
+	)
+	fakeTitle := faker.Name()
+	//fakeDesc := faker.Sentence()
+	*fakeYearLaunched = 2020
+	*fakeDuration = 90
+	*fakeRating = crud.TwelveRating
+	*fakeNotValidatedRating = 111
+	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	//fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
+	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
+	//fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
+
 	type fields struct {
 		r sqlboiler.Repository
 	}
@@ -280,13 +299,70 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Title: faker.Name(),
 				},
 			},
-			want:    logger.ErrIsRequired,
+			want:    fmt.Errorf("'title' %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
 			name:    "When VideoDTO is not provided",
 			args:    args{fakeExistTitle, crud.VideoDTO{}},
-			want:    logger.ErrIsRequired,
+			want:    fmt.Errorf("'Title' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When the Title in VideoDTO is blank",
+			args: args{
+				title: fakeExistTitle,
+				dto: crud.VideoDTO{
+					Title:        "    ",
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+				}},
+			want:    fmt.Errorf("'Title' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When the YearLaunched in VideoDTO is blank",
+			args: args{
+				title: fakeExistTitle,
+				dto: crud.VideoDTO{
+					Title:        fakeTitle,
+					YearLaunched: nil,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+				}},
+			want:    fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When the Rating in VideoDTO is blank",
+			args: args{
+				title: fakeTitle,
+				dto: crud.VideoDTO{
+					Title:        fakeTitle,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       nil,
+					Duration:     fakeDuration,
+				}},
+			want:    fmt.Errorf("'Rating' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When the Duration in VideoDTO is blank",
+			args: args{
+				title: fakeTitle,
+				dto: crud.VideoDTO{
+					Title:        fakeTitle,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     nil,
+				},
+			},
+			want:    fmt.Errorf("'Duration' field %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
@@ -294,18 +370,30 @@ func Test_service_UpdateVideo(t *testing.T) {
 			args: args{
 				fakeDoesNotExistTitle,
 				crud.VideoDTO{
-					Title: faker.FirstName(),
+					Title:        fakeTitle,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    fmt.Errorf("%s: %w", fakeDoesNotExistTitle, logger.ErrNotFound),
 			wantErr: true,
 		},
 		{
-			name: "When title is found and VideoDTO is provided",
+			name: "When title is found and VideoDTO is right",
 			args: args{
 				fakeExistTitle,
 				crud.VideoDTO{
-					Title: faker.FirstName(),
+					Title:        fakeTitle,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    nil,
@@ -314,7 +402,8 @@ func Test_service_UpdateVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "When title is not found" || tt.name == "When title is found and VideoDTO is provided" {
+			if tt.name == "When title is not found" || tt.name == "When title is found and VideoDTO is right" {
+				tt.args.title = strings.ToLower(strings.TrimSpace(tt.args.title))
 				mockR.EXPECT().
 					UpdateVideo(tt.args.title, tt.args.dto).
 					Return(tt.want)
@@ -325,9 +414,13 @@ func Test_service_UpdateVideo(t *testing.T) {
 				t.Errorf("UpdateVideo() error: %v, wantErr: %v", err, tt.wantErr)
 				return
 			}
-			if !errors.Is(err, tt.want) {
-				t.Errorf("UpdateVideo() got: '%v', want: '%v'", err, tt.want)
+			if err != nil && err.Error() != tt.want.Error() {
+				t.Errorf("AddVideo() got: \"%v\", want: \"%v\"", err, tt.want)
 			}
+
+			//if !errors.Is(err, tt.want) {
+			//	t.Errorf("UpdateVideo() got: '%v', want: '%v'", err, tt.want)
+			//}
 		})
 	}
 }
@@ -398,7 +491,7 @@ func Test_service_FetchVideo(t *testing.T) {
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
 		fakeExistTitle        = "fakeExistTitle"
 	)
-	fakeErrorInternalApplication := fmt.Errorf("Service.FetchVideo(): %w", logger.ErrInternalApplication)
+	fakeErrorInternalApplication := fmt.Errorf("anyname: %w", logger.ErrInternalApplication)
 	fakeVideo := models.Video{
 		ID:           uuid.New().String(),
 		Title:        fakeExistTitle,
@@ -409,7 +502,7 @@ func Test_service_FetchVideo(t *testing.T) {
 		Duration:     150,
 	}
 	type args struct {
-		name string
+		title string
 	}
 	type returns struct {
 		video models.Video
@@ -432,7 +525,7 @@ func Test_service_FetchVideo(t *testing.T) {
 			wantErr: true,
 			setupMockR: func() {
 				mockR.EXPECT().
-					FetchVideo("anyName").
+					FetchVideo("anyname").
 					Return(
 						models.Video{},
 						fakeErrorInternalApplication,
@@ -444,12 +537,12 @@ func Test_service_FetchVideo(t *testing.T) {
 			args: args{fakeDoesNotExistTitle},
 			want: returns{
 				models.Video{},
-				fmt.Errorf("%s: %w", fakeDoesNotExistTitle, logger.ErrNotFound),
+				fmt.Errorf("%s: %w", strings.ToLower(strings.ToLower(fakeDoesNotExistTitle)), logger.ErrNotFound),
 			},
 			wantErr: true,
 			setupMockR: func() {
 				mockR.EXPECT().
-					FetchVideo(fakeDoesNotExistTitle).
+					FetchVideo(strings.ToLower(strings.ToLower(fakeDoesNotExistTitle))).
 					Return(
 						models.Video{},
 						sql.ErrNoRows,
@@ -466,7 +559,7 @@ func Test_service_FetchVideo(t *testing.T) {
 			wantErr: false,
 			setupMockR: func() {
 				mockR.EXPECT().
-					FetchVideo(fakeExistTitle).
+					FetchVideo(strings.ToLower(strings.TrimSpace(fakeExistTitle))).
 					Return(
 						fakeVideo,
 						nil,
@@ -478,15 +571,13 @@ func Test_service_FetchVideo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setupMockR()
 			s := crud.NewService(mockR)
-			got, err := s.FetchVideo(tt.args.name)
+			got, err := s.FetchVideo(tt.args.title)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchVideo() error: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want.video) {
-				t.Errorf("GetVideo() got: %v, want: %v", got, tt.want.video)
-			}
-			if tt.wantErr && errors.Is(err, tt.want.err) {
+			assert.Equal(t, got, tt.want.video, "they should be equal")
+			if err != nil && err.Error() != tt.want.err.Error() {
 				t.Errorf("GetVideo() got: %v, want: %v", err, tt.want.err)
 			}
 		})
