@@ -42,8 +42,8 @@ type VideoDTO struct {
 	Opened       bool          `json:"opened"`
 	Rating       *VideoRating  `json:"rating" validate:"required"`
 	Duration     *int16        `json:"duration" validate:"required"`
-	Categories   []CategoryDTO `json:"categories"`
-	Genres       []GenreDTO    `json:"genres"`
+	Categories   []CategoryDTO `json:"categories" validate:"not_blank"`
+	Genres       []GenreDTO    `json:"genres" validate:"not_blank"`
 }
 
 func MapVideoToDTO(video models.Video) (*VideoDTO, error) {
