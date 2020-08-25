@@ -6,6 +6,7 @@ package models
 var TableNames = struct {
 	CastMembers    string
 	Categories     string
+	CategoryGenre  string
 	CategoryVideo  string
 	GenreVideo     string
 	Genres         string
@@ -14,6 +15,7 @@ var TableNames = struct {
 }{
 	CastMembers:    "cast_members",
 	Categories:     "categories",
+	CategoryGenre:  "category_genre",
 	CategoryVideo:  "category_video",
 	GenreVideo:     "genre_video",
 	Genres:         "genres",

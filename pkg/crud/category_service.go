@@ -17,6 +17,7 @@ type service struct {
 }
 
 func (s service) RemoveCategory(name string) error {
+	name = strings.ToLower(strings.TrimSpace(name))
 	if len(strings.TrimSpace(name)) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
@@ -30,9 +31,11 @@ func (s service) RemoveCategory(name string) error {
 }
 
 func (s service) UpdateCategory(name string, c CategoryDTO) error {
-	if len(strings.TrimSpace(name)) == 0 {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if len(name) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
+	c.Name = strings.ToLower(strings.TrimSpace(c.Name))
 	if err := c.Validate(); err != nil {
 		return err
 	}

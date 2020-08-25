@@ -103,13 +103,16 @@ var CategoryWhere = struct {
 
 // CategoryRels is where relationship names are stored.
 var CategoryRels = struct {
+	Genres string
 	Videos string
 }{
+	Genres: "Genres",
 	Videos: "Videos",
 }
 
 // categoryR is where relationships are stored.
 type categoryR struct {
+	Genres GenreSlice `boil:"Genres" json:"Genres" toml:"Genres" yaml:"Genres"`
 	Videos VideoSlice `boil:"Videos" json:"Videos" toml:"Videos" yaml:"Videos"`
 }
 
@@ -423,6 +426,28 @@ func (q categoryQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	return count > 0, nil
 }
 
+// Genres retrieves all the genre's Genres with an executor.
+func (o *Category) Genres(mods ...qm.QueryMod) genreQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.InnerJoin("\"category_genre\" on \"genres\".\"id\" = \"category_genre\".\"genre_id\""),
+		qm.Where("\"category_genre\".\"category_id\"=?", o.ID),
+	)
+
+	query := Genres(queryMods...)
+	queries.SetFrom(query.Query, "\"genres\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"genres\".*"})
+	}
+
+	return query
+}
+
 // Videos retrieves all the video's Videos with an executor.
 func (o *Category) Videos(mods ...qm.QueryMod) videoQuery {
 	var queryMods []qm.QueryMod
@@ -443,6 +468,122 @@ func (o *Category) Videos(mods ...qm.QueryMod) videoQuery {
 	}
 
 	return query
+}
+
+// LoadGenres allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (categoryL) LoadGenres(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCategory interface{}, mods queries.Applicator) error {
+	var slice []*Category
+	var object *Category
+
+	if singular {
+		object = maybeCategory.(*Category)
+	} else {
+		slice = *maybeCategory.(*[]*Category)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &categoryR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &categoryR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.Select("\"genres\".*, \"a\".\"category_id\""),
+		qm.From("\"genres\""),
+		qm.InnerJoin("\"category_genre\" as \"a\" on \"genres\".\"id\" = \"a\".\"genre_id\""),
+		qm.WhereIn("\"a\".\"category_id\" in ?", args...),
+		qmhelper.WhereIsNull("\"genres\".\"deleted_at\""),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load genres")
+	}
+
+	var resultSlice []*Genre
+
+	var localJoinCols []string
+	for results.Next() {
+		one := new(Genre)
+		var localJoinCol string
+
+		err = results.Scan(&one.ID, &one.Name, &one.IsValidated, &one.CreatedAt, &one.UpdatedAt, &one.DeletedAt, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for genres")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice genres")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on genres")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for genres")
+	}
+
+	if len(genreAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Genres = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &genreR{}
+			}
+			foreign.R.Categories = append(foreign.R.Categories, object)
+		}
+		return nil
+	}
+
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
+		for _, local := range slice {
+			if local.ID == localJoinCol {
+				local.R.Genres = append(local.R.Genres, foreign)
+				if foreign.R == nil {
+					foreign.R = &genreR{}
+				}
+				foreign.R.Categories = append(foreign.R.Categories, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadVideos allows an eager lookup of values, cached into the
@@ -559,6 +700,174 @@ func (categoryL) LoadVideos(ctx context.Context, e boil.ContextExecutor, singula
 	}
 
 	return nil
+}
+
+// AddGenresG adds the given related objects to the existing relationships
+// of the category, optionally inserting them as new records.
+// Appends related to o.R.Genres.
+// Sets related.R.Categories appropriately.
+// Uses the global database handle.
+func (o *Category) AddGenresG(ctx context.Context, insert bool, related ...*Genre) error {
+	return o.AddGenres(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// AddGenres adds the given related objects to the existing relationships
+// of the category, optionally inserting them as new records.
+// Appends related to o.R.Genres.
+// Sets related.R.Categories appropriately.
+func (o *Category) AddGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		}
+	}
+
+	for _, rel := range related {
+		query := "insert into \"category_genre\" (\"category_id\", \"genre_id\") values ($1, $2)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
+	if o.R == nil {
+		o.R = &categoryR{
+			Genres: related,
+		}
+	} else {
+		o.R.Genres = append(o.R.Genres, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &genreR{
+				Categories: CategorySlice{o},
+			}
+		} else {
+			rel.R.Categories = append(rel.R.Categories, o)
+		}
+	}
+	return nil
+}
+
+// SetGenresG removes all previously related items of the
+// category replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Categories's Genres accordingly.
+// Replaces o.R.Genres with related.
+// Sets related.R.Categories's Genres accordingly.
+// Uses the global database handle.
+func (o *Category) SetGenresG(ctx context.Context, insert bool, related ...*Genre) error {
+	return o.SetGenres(ctx, boil.GetContextDB(), insert, related...)
+}
+
+// SetGenres removes all previously related items of the
+// category replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Categories's Genres accordingly.
+// Replaces o.R.Genres with related.
+// Sets related.R.Categories's Genres accordingly.
+func (o *Category) SetGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
+	query := "delete from \"category_genre\" where \"category_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	removeGenresFromCategoriesSlice(o, related)
+	if o.R != nil {
+		o.R.Genres = nil
+	}
+	return o.AddGenres(ctx, exec, insert, related...)
+}
+
+// RemoveGenresG relationships from objects passed in.
+// Removes related items from R.Genres (uses pointer comparison, removal does not keep order)
+// Sets related.R.Categories.
+// Uses the global database handle.
+func (o *Category) RemoveGenresG(ctx context.Context, related ...*Genre) error {
+	return o.RemoveGenres(ctx, boil.GetContextDB(), related...)
+}
+
+// RemoveGenres relationships from objects passed in.
+// Removes related items from R.Genres (uses pointer comparison, removal does not keep order)
+// Sets related.R.Categories.
+func (o *Category) RemoveGenres(ctx context.Context, exec boil.ContextExecutor, related ...*Genre) error {
+	var err error
+	query := fmt.Sprintf(
+		"delete from \"category_genre\" where \"category_id\" = $1 and \"genre_id\" in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
+	for _, rel := range related {
+		values = append(values, rel.ID)
+	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeGenresFromCategoriesSlice(o, related)
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Genres {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Genres)
+			if ln > 1 && i < ln-1 {
+				o.R.Genres[i] = o.R.Genres[ln-1]
+			}
+			o.R.Genres = o.R.Genres[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+func removeGenresFromCategoriesSlice(o *Category, related []*Genre) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Categories {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Categories)
+			if ln > 1 && i < ln-1 {
+				rel.R.Categories[i] = rel.R.Categories[ln-1]
+			}
+			rel.R.Categories = rel.R.Categories[:ln-1]
+			break
+		}
+	}
 }
 
 // AddVideosG adds the given related objects to the existing relationships
