@@ -21,11 +21,25 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) error {
 	if err != nil {
 		return err
 	}
-	titleDTO := strings.ToLower(strings.TrimSpace(videoDTO.Title))
-	video.Title = titleDTO
+	tx, err := boil.BeginTx(r.ctx, nil)
+	if err != nil {
+		return err
+	}
 	_, err = video.UpdateG(r.ctx, boil.Infer())
 	if err != nil {
-		return fmt.Errorf("%s %w", titleDTO, logger.ErrAlreadyExists)
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return fmt.Errorf("%s %w", videoDTO.Title, logger.ErrAlreadyExists)
+	}
+	if err := r.setCategoriesInVideo(videoDTO.Categories, video, tx); err != nil {
+		return err
+	}
+	if err := r.setGenresInVideo(videoDTO.Genres, video, tx); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -33,7 +47,7 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) error {
 func (r Repository) AddVideo(videoDTO crud.VideoDTO) error {
 	video := models.Video{
 		ID:    uuid.New().String(),
-		Title: strings.ToLower(strings.TrimSpace(videoDTO.Title)),
+		Title: videoDTO.Title,
 	}
 	tx, err := boil.BeginTx(r.ctx, nil)
 	if err != nil {
@@ -43,7 +57,7 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) error {
 	if err != nil {
 		var e *pq.Error
 		if err := tx.Rollback(); err != nil {
-			return nil
+			return err
 		}
 		if errors.As(err, &e) {
 			if e.Code.Name() == "unique_violation" {
@@ -53,10 +67,10 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) error {
 			}
 		}
 	}
-	if err := r.addCategoriesToVideo(videoDTO.Categories, video, tx); err != nil {
+	if err := r.setCategoriesInVideo(videoDTO.Categories, video, tx); err != nil {
 		return err
 	}
-	if err := r.addGenresToVideo(videoDTO.Genres, video, tx); err != nil {
+	if err := r.setGenresInVideo(videoDTO.Genres, video, tx); err != nil {
 		return err
 	}
 	if err := tx.Commit(); err != nil {
@@ -65,7 +79,7 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) error {
 	return nil
 }
 
-func (r Repository) addCategoriesToVideo(categories []crud.CategoryDTO, video models.Video, tx *sql.Tx) error {
+func (r Repository) setCategoriesInVideo(categories []crud.CategoryDTO, video models.Video, tx *sql.Tx) error {
 	if categories != nil {
 		clause := "name=?"
 		categoryNames := make([]interface{}, len(categories))
@@ -100,7 +114,7 @@ func (r Repository) addCategoriesToVideo(categories []crud.CategoryDTO, video mo
 	return nil
 }
 
-func (r Repository) addGenresToVideo(genres []crud.GenreDTO, video models.Video, tx *sql.Tx) error {
+func (r Repository) setGenresInVideo(genres []crud.GenreDTO, video models.Video, tx *sql.Tx) error {
 	if genres != nil {
 		clause := "name=?"
 		genreNames := make([]interface{}, len(genres))
