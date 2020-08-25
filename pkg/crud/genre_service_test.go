@@ -25,12 +25,13 @@ func TestAddGenre(t *testing.T) {
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
 	fakeName := strings.ToLower(faker.FirstName())
+	fakeDoesNotExistCategory := crud.CategoryDTO{Name: faker.FirstName()}
 	type fields struct {
 		r sqlboiler.Repository
 	}
 	type returns struct {
-		c models.Genre
-		e error
+		genre models.Genre
+		err   error
 	}
 	type args struct {
 		dto crud.GenreDTO
@@ -45,29 +46,52 @@ func TestAddGenre(t *testing.T) {
 		{
 			name:    "When GenreDTO is not provided",
 			args:    args{crud.GenreDTO{}},
-			want:    returns{models.Genre{}, logger.ErrIsRequired},
+			want:    returns{err: fmt.Errorf("'Name' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
-			name: "When the name in GenreDTO is blank",
+			name: "When the Name in GenreDTO is blank",
 			args: args{crud.GenreDTO{
 				Name: "    ",
 			}},
-			want:    returns{models.Genre{}, logger.ErrIsRequired},
+			want:    returns{err: fmt.Errorf("'Name' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
-			name: "When name in GenreDTO already exists",
+			name: "When the Name in GenreDTO already exists",
 			args: args{crud.GenreDTO{
-				Name: strings.ToLower(faker.FirstName()),
+				Name:       strings.ToLower(faker.FirstName()),
+				Categories: []crud.CategoryDTO{fakeDoesNotExistCategory},
 			}},
-			want:    returns{models.Genre{}, logger.ErrAlreadyExists},
+			want:    returns{err: logger.ErrAlreadyExists},
+			wantErr: true,
+		},
+		{
+			name: "When GenreDTO is with wrong genres",
+			args: args{
+				crud.GenreDTO{
+					Name:       fakeName,
+					Categories: []crud.CategoryDTO{fakeDoesNotExistCategory},
+				},
+			},
+			want:    returns{err: logger.ErrIsRequired},
+			wantErr: true,
+		},
+		{
+			name: "When GenreDTO is without categories",
+			args: args{
+				crud.GenreDTO{
+					Name: fakeName,
+				},
+			},
+			want:    returns{err: fmt.Errorf("'Categories' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
 			name: "When GenreDTO is right",
 			args: args{crud.GenreDTO{
-				Name: fakeName,
+				Name:       fakeName,
+				Categories: []crud.CategoryDTO{fakeDoesNotExistCategory},
 			}},
 			want: returns{models.Genre{
 				Name: fakeName,
@@ -77,10 +101,16 @@ func TestAddGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want.e != logger.ErrIsRequired {
+			if tt.name == "When the Name in GenreDTO already exists" ||
+				tt.name == "When GenreDTO is with wrong genres" ||
+				tt.name == "When GenreDTO is right" {
+				dto := crud.GenreDTO{
+					Name:       strings.ToLower(strings.TrimSpace(tt.args.dto.Name)),
+					Categories: tt.args.dto.Categories,
+				}
 				mockR.EXPECT().
-					AddGenre(tt.args.dto).
-					Return(tt.want.e)
+					AddGenre(dto).
+					Return(tt.want.err)
 			}
 			s := crud.NewService(mockR)
 			err := s.AddGenre(tt.args.dto)
@@ -88,8 +118,8 @@ func TestAddGenre(t *testing.T) {
 				t.Errorf("AddGenre() error = '%v', wantErr '%v'", err, tt.wantErr)
 				return
 			}
-			if !errors.Is(err, tt.want.e) {
-				t.Errorf("AddGenre() got = '%v', want '%v'", err, tt.want.e)
+			if err != nil && err.Error() != tt.want.err.Error() {
+				t.Errorf("AddGenre() got = '%v', want '%v'", err, tt.want.err)
 			}
 		})
 	}
@@ -167,7 +197,11 @@ func Test_service_UpdateGenre(t *testing.T) {
 	const (
 		fakeExistName        = "fakeExistName"
 		fakeDoesNotExistName = "fakeDoesNotExistName"
+		fakeCategoryIndex    = 0
 	)
+	fakeName := faker.FirstName()
+	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName()}
+	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
 	type fields struct {
 		r sqlboiler.Repository
 	}
@@ -190,13 +224,46 @@ func Test_service_UpdateGenre(t *testing.T) {
 					Name: faker.FirstName(),
 				},
 			},
+			want:    fmt.Errorf("'name' %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When the Name in CategoryDTO is blank",
+			args: args{
+				fakeExistName,
+				crud.GenreDTO{
+					Name: "    ",
+				}},
+			want:    fmt.Errorf("'Name' field %w", logger.ErrIsRequired),
+			wantErr: true,
+		},
+		{
+			name: "When GenreDTO is with wrong genres",
+			args: args{
+				fakeExistName,
+				crud.GenreDTO{
+					Name:       fakeName,
+					Categories: []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+				},
+			},
 			want:    logger.ErrIsRequired,
+			wantErr: true,
+		},
+		{
+			name: "When GenreDTO is without genres",
+			args: args{
+				fakeExistName,
+				crud.GenreDTO{
+					Name: fakeName,
+				},
+			},
+			want:    fmt.Errorf("'Categories' field %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
 			name:    "When GenreDTO is not provided",
 			args:    args{fakeExistName, crud.GenreDTO{}},
-			want:    logger.ErrIsRequired,
+			want:    fmt.Errorf("'Name' field %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
@@ -204,18 +271,20 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeDoesNotExistName,
 				crud.GenreDTO{
-					Name: faker.FirstName(),
+					Name:       faker.FirstName(),
+					Categories: []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    fmt.Errorf("%s: %w", fakeDoesNotExistName, logger.ErrNotFound),
 			wantErr: true,
 		},
 		{
-			name: "When name is found and GenreDTO is provided",
+			name: "When GenreDTO is right",
 			args: args{
 				fakeExistName,
 				crud.GenreDTO{
-					Name: faker.FirstName(),
+					Name:       faker.FirstName(),
+					Categories: []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
 				},
 			},
 			want:    nil,
@@ -224,9 +293,17 @@ func Test_service_UpdateGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "When name is not found" || tt.name == "When name is found and GenreDTO is provided" {
+			if tt.name == "When the Name in GenreDTO already exists" ||
+				tt.name == "When GenreDTO is with wrong genres" ||
+				tt.name == "When name is not found" ||
+				tt.name == "When GenreDTO is right" {
+				name := strings.ToLower(strings.TrimSpace(tt.args.name))
+				dto := crud.GenreDTO{
+					Name:       strings.ToLower(strings.TrimSpace(tt.args.dto.Name)),
+					Categories: tt.args.dto.Categories,
+				}
 				mockR.EXPECT().
-					UpdateGenre(tt.args.name, tt.args.dto).
+					UpdateGenre(name, dto).
 					Return(tt.want)
 			}
 			s := crud.NewService(mockR)
@@ -235,8 +312,8 @@ func Test_service_UpdateGenre(t *testing.T) {
 				t.Errorf("UpdateGenre() error: %v, wantErr: %v", err, tt.wantErr)
 				return
 			}
-			if !errors.Is(err, tt.want) {
-				t.Errorf("UpdateGenre() got: '%v', want: '%v'", err, tt.want)
+			if err != nil && err.Error() != tt.want.Error() {
+				t.Errorf("AddCategory() got = '%v', want '%v'", err, tt.want)
 			}
 		})
 	}

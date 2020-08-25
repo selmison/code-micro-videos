@@ -85,7 +85,7 @@ func TestAddCategory(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When CategoryDTO is without categories and genres",
+			name: "When CategoryDTO is without genres",
 			args: args{
 				crud.CategoryDTO{
 					Name:        fakeName,
@@ -215,7 +215,6 @@ func Test_service_UpdateCategory(t *testing.T) {
 	fakeDescription := faker.Sentence()
 	fakeDoesNotExistGenre := crud.GenreDTO{Name: faker.FirstName()}
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-
 	type fields struct {
 		r sqlboiler.Repository
 	}
