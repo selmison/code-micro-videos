@@ -40,6 +40,10 @@ func (s *server) handleVideoCreate() http.HandlerFunc {
 				s.errStatusConflict(w, err)
 				return
 			}
+			if errors.Is(err, logger.ErrNotFound) {
+				s.errNotFound(w, err)
+				return
+			}
 			s.errInternalServer(w, err)
 			return
 		}
@@ -60,16 +64,13 @@ func (s *server) handleVideosGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		videosDTO := make([]crud.VideoDTO, len(videos))
+		videosDTO := make([]*crud.VideoDTO, len(videos))
 		for i, video := range videos {
-			videosDTO[i] = crud.VideoDTO{
-				Title:        video.Title,
-				Description:  video.Description,
-				YearLaunched: video.YearLaunched,
-				Opened:       video.Opened.Bool,
-				Rating:       crud.VideoRating(video.Rating),
-				Duration:     video.Duration,
+			dto, err := crud.MapVideoToDTO(*video)
+			if err != nil {
+				s.errBadRequest(w, err)
 			}
+			videosDTO[i] = dto
 		}
 		if err := json.NewEncoder(w).Encode(videosDTO); err != nil {
 			s.errInternalServer(w, err)
@@ -100,13 +101,9 @@ func (s *server) handleVideoGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		videoDTO := crud.VideoDTO{
-			Title:        video.Title,
-			Description:  video.Description,
-			YearLaunched: video.YearLaunched,
-			Opened:       video.Opened.Bool,
-			Rating:       crud.VideoRating(video.Rating),
-			Duration:     video.Duration,
+		videoDTO, err := crud.MapVideoToDTO(video)
+		if err != nil {
+			s.errBadRequest(w, err)
 		}
 		if err := json.NewEncoder(w).Encode(videoDTO); err != nil {
 			s.errInternalServer(w, err)

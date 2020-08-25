@@ -88,7 +88,7 @@ func (r Repository) addCategoriesToVideo(categories []crud.CategoryDTO, video mo
 			if err := tx.Rollback(); err != nil {
 				return err
 			}
-			return fmt.Errorf("at least one category %w", logger.ErrIsRequired)
+			return fmt.Errorf("none category is %w", logger.ErrNotFound)
 		}
 		if err := video.SetCategoriesG(r.ctx, false, categorySlice...); err != nil {
 			if err := tx.Rollback(); err != nil {
@@ -123,7 +123,7 @@ func (r Repository) addGenresToVideo(genres []crud.GenreDTO, video models.Video,
 			if err := tx.Rollback(); err != nil {
 				return err
 			}
-			return fmt.Errorf("at least one genre %w", logger.ErrIsRequired)
+			return fmt.Errorf("none genre is %w", logger.ErrNotFound)
 		}
 		if err := video.SetGenresG(r.ctx, false, genreSlice...); err != nil {
 			if err := tx.Rollback(); err != nil {
