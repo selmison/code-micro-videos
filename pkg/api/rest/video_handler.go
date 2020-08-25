@@ -119,19 +119,17 @@ func (s *server) handleVideoUpdate() http.HandlerFunc {
 			return
 		}
 		params := httprouter.ParamsFromContext(r.Context())
-		if videoTitle := params.ByName("title"); strings.TrimSpace(videoTitle) != "" {
-			err = s.svc.UpdateVideo(videoTitle, *videoDTO)
-			if err != nil {
-				if errors.Is(err, logger.ErrNotFound) {
-					s.errNotFound(w, err)
-					return
-				}
-				if errors.Is(err, logger.ErrInternalApplication) {
-					s.errInternalServer(w, err)
-					return
-				}
+		videoTitle := params.ByName("title")
+		err = s.svc.UpdateVideo(videoTitle, *videoDTO)
+		if err != nil {
+			if errors.Is(err, logger.ErrNotFound) {
+				s.errNotFound(w, err)
+				return
 			}
-		} else {
+			if errors.Is(err, logger.ErrInternalApplication) {
+				s.errInternalServer(w, err)
+				return
+			}
 			s.errBadRequest(w, err)
 			return
 		}
