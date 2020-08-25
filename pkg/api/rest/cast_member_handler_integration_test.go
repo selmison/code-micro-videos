@@ -429,7 +429,7 @@ func Test_RestApi_Update_CastMember(t *testing.T) {
 				url:         fakeUrl(fakeExistName),
 				contentType: "application/json; charset=UTF-8",
 				body: strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
+					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s"}`,
 					faker.Name(),
 					faker.URL(),
 					faker.Phonenumber(),

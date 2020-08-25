@@ -4,6 +4,7 @@ package rest_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -366,7 +367,7 @@ func Test_RestApi_Get_Video(t *testing.T) {
 	}
 	type response struct {
 		status int
-		body   []byte
+		body   interface{}
 	}
 	tests := []struct {
 		name    string
@@ -394,7 +395,7 @@ func Test_RestApi_Get_Video(t *testing.T) {
 			},
 			want: response{
 				status: http.StatusOK,
-				body:   toJSON(fakeExistVideoDTO),
+				body:   fakeExistVideoDTO,
 			},
 		},
 	}
@@ -415,12 +416,29 @@ func Test_RestApi_Get_Video(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				assert.Equal(
-					t,
-					strings.TrimSpace(string(data)),
-					strings.TrimSpace(string(tt.want.body)),
-					"they should be equal",
-				)
+				if tt.name == "When title doesn't exist" {
+					assert.Equal(
+						t,
+						strings.TrimSpace(string(data)),
+						strings.TrimSpace(string(tt.want.body.([]byte))),
+						"they should be equal",
+					)
+					return
+				}
+				if tt.name == "When title exists" {
+					videoBody := crud.VideoDTO{}
+					if err := json.Unmarshal(data, &videoBody); err != nil {
+						t.Errorf("unmarshal data: %v", err)
+						return
+					}
+					assert.Equal(
+						t,
+						videoBody,
+						fakeExistVideoDTO,
+						"they should be equal",
+					)
+					return
+				}
 			}
 		})
 	}
@@ -514,11 +532,39 @@ func Test_RestApi_Update_Video(t *testing.T) {
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistTitle := testdata.FakeVideos[0].Title
+	const (
+		fakeVideosIndex   = 0
+		fakeCategoryIndex = 0
+		fakeGenreIndex    = 0
+	)
+	fakeExistVideo := testdata.FakeVideos[fakeVideosIndex]
+	fakeExistTitle := fakeExistVideo.Title
 	fakeDoesNotExistTitle := "doesNotExistTitle"
 	fakeUrl := func(title string) string {
 		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
 	}
+	fakeExistCategoryDTO := toJSON([]crud.CategoryDTO{
+		{
+			Name:        fakeExistVideo.R.Categories[fakeCategoryIndex].Name,
+			Description: fakeExistVideo.R.Categories[fakeCategoryIndex].Description.String,
+		},
+	})
+	fakeDoesNotExistCategoryDTO := toJSON([]crud.CategoryDTO{
+		{
+			Name:        faker.FirstName(),
+			Description: faker.Sentence(),
+		},
+	})
+	fakeExistGenreDTO := toJSON([]crud.GenreDTO{
+		{
+			Name: fakeExistVideo.R.Genres[fakeGenreIndex].Name,
+		},
+	})
+	fakeDoesNotExistGenreDTO := toJSON([]crud.GenreDTO{
+		{
+			Name: faker.FirstName(),
+		},
+	})
 	type request struct {
 		url         string
 		contentType string
@@ -539,15 +585,18 @@ func Test_RestApi_Update_Video(t *testing.T) {
 			req: request{
 				url:         fakeUrl(fakeDoesNotExistTitle),
 				contentType: "application/json; charset=UTF-8",
-				body: strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
-					faker.Name(),
-					faker.Sentence(),
-					2020,
-					false,
-					crud.TenRating,
-					250,
-				)),
+				body: strings.NewReader(
+					fmt.Sprintf(
+						`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
+						faker.Name(),
+						faker.Sentence(),
+						2020,
+						false,
+						crud.TenRating,
+						250,
+						fakeExistGenreDTO,
+						fakeExistCategoryDTO,
+					)),
 			},
 			want: response{
 				status: http.StatusNotFound,
@@ -556,23 +605,51 @@ func Test_RestApi_Update_Video(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When title exists",
+			name: "When VideoDTO is with wrong categories and genres",
 			req: request{
-				url:         fakeUrl(fakeExistTitle),
-				contentType: "application/json; charset=UTF-8",
-				body: strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d}`,
-					faker.Sentence(),
-					faker.Sentence(),
-					2020,
-					false,
-					crud.TenRating,
-					250,
-				)),
+				fakeUrl(fakeExistTitle),
+				"application/json; charset=UTF-8",
+				strings.NewReader(
+					fmt.Sprintf(
+						`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
+						faker.Name(),
+						faker.Sentence(),
+						2020,
+						false,
+						crud.TenRating,
+						250,
+						fakeDoesNotExistGenreDTO,
+						fakeDoesNotExistCategoryDTO,
+					)),
+			},
+			want: response{
+				status: http.StatusNotFound,
+				body:   http.StatusText(http.StatusNotFound),
+			},
+			wantErr: false,
+		},
+		{
+			name: "When everything is right",
+			req: request{
+				fakeUrl(fakeExistTitle),
+				"application/json; charset=UTF-8",
+				strings.NewReader(
+					fmt.Sprintf(
+						`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
+						faker.Name(),
+						faker.Sentence(),
+						2020,
+						false,
+						crud.TenRating,
+						250,
+						fakeExistGenreDTO,
+						fakeExistCategoryDTO,
+					)),
 			},
 			want: response{
 				status: http.StatusOK,
 			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
