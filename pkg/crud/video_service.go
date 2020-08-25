@@ -32,6 +32,7 @@ func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
 	if err := videoDTO.Validate(); err != nil {
 		return err
 	}
+	videoDTO.Title = strings.ToLower(strings.TrimSpace(videoDTO.Title))
 	if err := s.r.UpdateVideo(title, videoDTO); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", title, logger.ErrNotFound)
