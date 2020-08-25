@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"math/rand"
+	"strings"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/bluele/factory-go/factory"
@@ -29,7 +30,7 @@ var (
 	).Attr("ID", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Name", func(args factory.Args) (interface{}, error) {
-		return randomdata.SillyName(), nil
+		return strings.ToLower(randomdata.SillyName()), nil
 	}).Attr("Description", func(args factory.Args) (interface{}, error) {
 		desc := null.String{String: "", Valid: true}
 		if rand.Intn(2) == 0 {
@@ -49,7 +50,7 @@ var (
 	).Attr("ID", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Name", func(args factory.Args) (interface{}, error) {
-		return randomdata.SillyName(), nil
+		return strings.ToLower(randomdata.SillyName()), nil
 	}).Attr("IsValidated", func(args factory.Args) (interface{}, error) {
 		isValidated := true
 		if rand.Intn(2) == 0 {
@@ -63,7 +64,7 @@ var (
 	).Attr("ID", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Title", func(args factory.Args) (interface{}, error) {
-		return randomdata.FullName(randomdata.RandomGender), nil
+		return strings.ToLower(randomdata.FullName(randomdata.RandomGender)), nil
 	}).Attr("Description", func(args factory.Args) (interface{}, error) {
 		return randomdata.Paragraph(), nil
 	}).Attr("YearLaunched", func(args factory.Args) (interface{}, error) {

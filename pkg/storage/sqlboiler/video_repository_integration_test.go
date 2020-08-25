@@ -76,7 +76,7 @@ func TestRepository_AddVideo(t *testing.T) {
 					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
 				},
 			},
-			want:    returns{logger.ErrIsRequired},
+			want:    returns{logger.ErrNotFound},
 			wantErr: true,
 		},
 		{
