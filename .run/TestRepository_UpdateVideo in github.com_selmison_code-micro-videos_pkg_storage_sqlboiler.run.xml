@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false"
+                   name="TestRepository_UpdateVideo in github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
+                   type="GoTestRunConfiguration" factoryName="Go Test" nameIsGenerated="true">
+        <module name="backend"/>
+        <working_directory value="$PROJECT_DIR$/pkg/storage/sqlboiler"/>
+        <useCustomBuildTags value="true"/>
+        <framework value="gotest"/>
+        <kind value="PACKAGE"/>
+        <package value="github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"/>
+        <directory value="$PROJECT_DIR$"/>
+        <filePath value="$PROJECT_DIR$"/>
+        <pattern value="^\QTestRepository_UpdateVideo\E$"/>
+        <method v="2"/>
+    </configuration>
+</component>

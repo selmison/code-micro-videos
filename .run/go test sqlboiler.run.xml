@@ -1,14 +1,13 @@
 <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="go test crud" type="GoTestRunConfiguration" factoryName="Go Test"
+    <configuration default="false" name="go test sqlboiler" type="GoTestRunConfiguration" factoryName="Go Test"
                    nameIsGenerated="true">
         <module name="backend"/>
-        <working_directory value="$PROJECT_DIR$/pkg/crud"/>
+        <working_directory value="$PROJECT_DIR$/pkg/storage/sqlboiler"/>
         <useCustomBuildTags value="true"/>
-        <sudo value="true"/>
         <framework value="gotest"/>
         <kind value="DIRECTORY"/>
         <package value="github.com/selmison/code-micro-videos"/>
-        <directory value="$PROJECT_DIR$/pkg/crud"/>
+        <directory value="$PROJECT_DIR$/pkg/storage/sqlboiler"/>
         <filePath value="$PROJECT_DIR$"/>
         <method v="2"/>
     </configuration>
