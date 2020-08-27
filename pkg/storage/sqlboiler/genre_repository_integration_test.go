@@ -20,19 +20,28 @@ import (
 )
 
 func TestRepository_AddGenre(t *testing.T) {
-	cfg, teardownTestCase, repository, err := setupTestCase(nil)
+	_, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
 	const (
-		fakeExistName        = "action"
-		fakeDoesNotExistName = "fakeDoesNotExistName"
+		fakeExistGenreName           = "fakeExistGenreName"
+		fakeExistCategoryName        = "fakeExistCategoryName"
+		fakeDoesNotExistGenreName    = "fakeDoesNotExistGenreName"
+		fakeDoesNotExistCategoryName = "fakeDoesNotExistCategoryName"
 	)
-	fakeExistGenre := models.Genre{
-		ID:   uuid.New().String(),
-		Name: fakeExistName,
+	fakeExistGenreDTO := crud.GenreDTO{Name: fakeExistGenreName}
+	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: fakeDoesNotExistCategoryName}
+	fakeExistCategoryDTO := crud.CategoryDTO{Name: fakeExistCategoryName}
+	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
+	}
+	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
 	}
 	type args struct {
 		genreDTO crud.GenreDTO
@@ -50,42 +59,38 @@ func TestRepository_AddGenre(t *testing.T) {
 		{
 			name: "When name in GenreDTO already exists",
 			args: args{crud.GenreDTO{
-				Name: fakeExistName,
+				Name: fakeExistGenreName,
 			}},
-			want:    returns{models.Genre{}, fmt.Errorf("name '%s' %w", fakeExistName, logger.ErrAlreadyExists)},
+			want:    returns{models.Genre{}, fmt.Errorf("name '%s' %w", fakeExistGenreName, logger.ErrAlreadyExists)},
+			wantErr: true,
+		},
+		{
+			name: "When VideoDTO is with wrong genres",
+			args: args{
+				crud.GenreDTO{
+					Name:       fakeDoesNotExistGenreName,
+					Categories: []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+				},
+			},
+			want:    returns{err: fmt.Errorf("none category is %w", logger.ErrNotFound)},
 			wantErr: true,
 		},
 		{
 			name: "When GenreDTO is right",
 			args: args{
 				crud.GenreDTO{
-					Name: fakeDoesNotExistName,
+					Name:       fakeDoesNotExistGenreName,
+					Categories: []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want: returns{
 				models.Genre{
-					Name: fakeDoesNotExistName,
+					Name: fakeDoesNotExistGenreName,
 				},
 				nil,
 			},
 			wantErr: false,
 		},
-	}
-	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
-	if err != nil {
-		t.Errorf("test: failed to setup test case: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	err = fakeExistGenre.InsertG(ctx, boil.Infer())
-	if err != nil {
-		t.Errorf("test: insert genre: %s", err)
-		return
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,8 +99,10 @@ func TestRepository_AddGenre(t *testing.T) {
 				t.Errorf("AddGenre() error: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(err, tt.want.err) {
-				t.Errorf("AddGenre() got: %v, want: %v", err, tt.want.err)
+			if tt.wantErr {
+				if err != nil && err.Error() != tt.want.err.Error() {
+					t.Errorf("AddVideo() got: %v, want: %v", err, tt.want.err)
+				}
 				return
 			}
 		})
@@ -214,7 +221,6 @@ func TestRepository_FetchGenre(t *testing.T) {
 			wantErr: false,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := repository.FetchGenre(tt.args.name)
@@ -281,20 +287,35 @@ func TestRepository_RemoveGenre(t *testing.T) {
 }
 
 func TestRepository_UpdateGenre(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
+	_, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
 	}
 	defer teardownTestCase(t)
 	const (
-		fakeExistName            = "action"
-		fakeDoesNotExistName     = "fakeDoesNotExistName"
-		fakeNewExistName         = "violent"
-		fakeNewDoestNotExistName = "new_action"
+		fakeExistGenreName            = "fakeExistGenreName"
+		fakeNewExistGenreName         = "fakeNewExistGenreName"
+		fakeDoesNotExistGenreName     = "fakeDoesNotExistGenreName"
+		fakeDoesNotExistCategoryName  = "fakeDoesNotExistCategoryName"
+		fakeNewDoestNotExistGenreName = "fakeNewDoestNotExistGenreName"
+		fakeExistCategoryName         = "fakeExistCategoryName"
 	)
-	type fields struct {
-		ctx context.Context
+	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: fakeDoesNotExistCategoryName}
+	fakeExistGenreDTO := crud.GenreDTO{Name: fakeExistGenreName}
+	fakeNewExistGenreDTO := crud.GenreDTO{Name: fakeNewExistGenreName}
+	fakeExistCategoryDTO := crud.CategoryDTO{Name: fakeExistCategoryName}
+	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
+	}
+	if err := repository.AddGenre(fakeNewExistGenreDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
+	}
+	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+		t.Errorf("test: insert category: %s", err)
+		return
 	}
 	type args struct {
 		name     string
@@ -302,7 +323,6 @@ func TestRepository_UpdateGenre(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    error
 		wantErr bool
@@ -310,9 +330,10 @@ func TestRepository_UpdateGenre(t *testing.T) {
 		{
 			name: "When name to update doesn't exist",
 			args: args{
-				fakeDoesNotExistName,
+				fakeDoesNotExistGenreName,
 				crud.GenreDTO{
-					Name: fakeNewDoestNotExistName,
+					Name:       fakeNewDoestNotExistGenreName,
+					Categories: []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    sql.ErrNoRows,
@@ -321,20 +342,34 @@ func TestRepository_UpdateGenre(t *testing.T) {
 		{
 			name: "When name in GenreDTO already exists",
 			args: args{
-				fakeExistName,
+				fakeExistGenreName,
 				crud.GenreDTO{
-					Name: fakeNewExistName,
+					Name:       fakeNewExistGenreName,
+					Categories: []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
-			want:    fmt.Errorf("%s %w", fakeNewExistName, logger.ErrAlreadyExists),
+			want:    fmt.Errorf("%s %w", fakeNewExistGenreName, logger.ErrAlreadyExists),
 			wantErr: true,
 		},
 		{
-			name: "When name exists and GenreDTO is right",
+			name: "When GenreDTO is with wrong genres",
 			args: args{
-				fakeExistName,
+				fakeExistGenreName,
 				crud.GenreDTO{
-					Name: fakeNewDoestNotExistName,
+					Name:       fakeDoesNotExistGenreName,
+					Categories: []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+				},
+			},
+			want:    fmt.Errorf("none category is %w", logger.ErrNotFound),
+			wantErr: true,
+		},
+		{
+			name: "When everything is right",
+			args: args{
+				fakeExistGenreName,
+				crud.GenreDTO{
+					Name:       fakeNewDoestNotExistGenreName,
+					Categories: []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    nil,
@@ -345,11 +380,11 @@ func TestRepository_UpdateGenre(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := repository.UpdateGenre(tt.args.name, tt.args.genreDTO)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UpdateGenre() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("UpdateGenre() got: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			if !reflect.DeepEqual(err, tt.want) {
+			if err != nil && err.Error() != tt.want.Error() {
 				t.Errorf("UpdateGenre() got: %v, want: %v", err, tt.want)
 			}
 		})
@@ -357,7 +392,7 @@ func TestRepository_UpdateGenre(t *testing.T) {
 }
 
 func TestGenre_isValidUUIDHook(t *testing.T) {
-	_, teardownTestCase, repository, err := setupTestCase(nil)
+	_, teardownTestCase, repository, err := setupTestCase(testdata.FakeGenres)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
@@ -399,11 +434,11 @@ func TestGenre_isValidUUIDHook(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.args.genre.InsertG(repository.ctx, boil.Infer())
 			if (err != nil) != tt.wantErr {
-				t.Errorf("isValidUUIDHook() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("isValidUUIDGenreHook() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(err, tt.want) {
-				t.Errorf("UpdateCategory() got: %v, want: %v", err, tt.want)
+				t.Errorf("UpdateGenre() got: %v, want: %v", err, tt.want)
 			}
 		})
 	}

@@ -78,16 +78,6 @@ func TestAddGenre(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When GenreDTO is without categories",
-			args: args{
-				crud.GenreDTO{
-					Name: fakeName,
-				},
-			},
-			want:    returns{err: fmt.Errorf("'Categories' field %w", logger.ErrIsRequired)},
-			wantErr: true,
-		},
-		{
 			name: "When GenreDTO is right",
 			args: args{crud.GenreDTO{
 				Name:       fakeName,
@@ -168,13 +158,11 @@ func Test_service_RemoveGenre(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "When name is not found" {
+			if tt.name == "When name is not found" ||
+				tt.name == "When name is found" {
+				name := strings.ToLower(strings.TrimSpace(tt.args.name))
 				mockR.EXPECT().
-					RemoveGenre(tt.args.name).
-					Return(tt.want)
-			} else if tt.name == "When name is found" {
-				mockR.EXPECT().
-					RemoveGenre(tt.args.name).
+					RemoveGenre(name).
 					Return(tt.want)
 			}
 			s := crud.NewService(mockR)
@@ -247,17 +235,6 @@ func Test_service_UpdateGenre(t *testing.T) {
 				},
 			},
 			want:    logger.ErrIsRequired,
-			wantErr: true,
-		},
-		{
-			name: "When GenreDTO is without genres",
-			args: args{
-				fakeExistName,
-				crud.GenreDTO{
-					Name: fakeName,
-				},
-			},
-			want:    fmt.Errorf("'Categories' field %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
@@ -418,7 +395,7 @@ func Test_service_FetchGenre(t *testing.T) {
 			wantErr: true,
 			setupMockR: func() {
 				mockR.EXPECT().
-					FetchGenre("anyName").
+					FetchGenre("anyname").
 					Return(
 						models.Genre{},
 						fakeErrorInternalApplication,
@@ -435,7 +412,7 @@ func Test_service_FetchGenre(t *testing.T) {
 			wantErr: true,
 			setupMockR: func() {
 				mockR.EXPECT().
-					FetchGenre(fakeDoesNotExistName).
+					FetchGenre(strings.ToLower(strings.TrimSpace(fakeDoesNotExistName))).
 					Return(
 						models.Genre{},
 						sql.ErrNoRows,

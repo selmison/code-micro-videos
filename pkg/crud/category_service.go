@@ -18,7 +18,7 @@ type service struct {
 
 func (s service) RemoveCategory(name string) error {
 	name = strings.ToLower(strings.TrimSpace(name))
-	if len(strings.TrimSpace(name)) == 0 {
+	if len(name) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
 	if err := s.r.RemoveCategory(name); err != nil {
@@ -30,16 +30,17 @@ func (s service) RemoveCategory(name string) error {
 	return nil
 }
 
-func (s service) UpdateCategory(name string, c CategoryDTO) error {
+func (s service) UpdateCategory(name string, dto CategoryDTO) error {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if len(name) == 0 {
 		return fmt.Errorf("'name' %w", logger.ErrIsRequired)
 	}
-	c.Name = strings.ToLower(strings.TrimSpace(c.Name))
-	if err := c.Validate(); err != nil {
+	dto.Name = strings.ToLower(strings.TrimSpace(dto.Name))
+	dto.Description = strings.TrimSpace(dto.Description)
+	if err := dto.Validate(); err != nil {
 		return err
 	}
-	if err := s.r.UpdateCategory(name, c); err != nil {
+	if err := s.r.UpdateCategory(name, dto); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", name, logger.ErrNotFound)
 		}
@@ -48,12 +49,16 @@ func (s service) UpdateCategory(name string, c CategoryDTO) error {
 	return nil
 }
 
-func (s service) AddCategory(c CategoryDTO) error {
-	c.Name = strings.ToLower(strings.TrimSpace(c.Name))
-	if err := c.Validate(); err != nil {
+func (s service) AddCategory(dto CategoryDTO) error {
+	dto.Name = strings.ToLower(strings.TrimSpace(dto.Name))
+	dto.Description = strings.TrimSpace(dto.Description)
+	for i := range dto.Genres {
+		dto.Genres[i].Name = strings.ToLower(strings.TrimSpace(dto.Genres[i].Name))
+	}
+	if err := dto.Validate(); err != nil {
 		return err
 	}
-	return s.r.AddCategory(c)
+	return s.r.AddCategory(dto)
 }
 func (s service) GetCategories(limit int) (models.CategorySlice, error) {
 	if limit < 0 {

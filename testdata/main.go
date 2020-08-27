@@ -20,10 +20,6 @@ const (
 	fakeVideosGenresLength     = 3
 )
 
-type RemoverOfTimes interface {
-	removeTimes()
-}
-
 var (
 	categoryFactory = factory.NewFactory(
 		&models.Category{},

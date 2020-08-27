@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,7 +31,7 @@ var (
 )
 
 func TestRepository_AddVideo(t *testing.T) {
-	cfg, teardownTestCase, repository, err := setupTestCase(nil)
+	_, teardownTestCase, repository, err := setupTestCase(nil)
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
@@ -50,6 +51,14 @@ func TestRepository_AddVideo(t *testing.T) {
 	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
 	fakeDoesNotExistGenreDTO := crud.GenreDTO{Name: faker.FirstName()}
+	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+		t.Errorf("test: insert category: %s", err)
+		return
+	}
+	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
+	}
 	type args struct {
 		videoDTO crud.VideoDTO
 	}
@@ -95,34 +104,11 @@ func TestRepository_AddVideo(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
-	if err != nil {
-		t.Errorf("test: failed to setup test case: %v\n", err)
-		return
-	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Errorf("test: failed to close DB: %v\n", err)
-		}
-	}()
-	ctx := context.Background()
-	fakeExistCategory := testdata.FakeCategories[fakeCategoryIndex]
-	err = fakeExistCategory.InsertG(ctx, boil.Infer())
-	if err != nil {
-		t.Errorf("test: insert video: %s", err)
-		return
-	}
-	fakeExistGenre := testdata.FakeGenres[fakeGenreIndex]
-	err = fakeExistGenre.InsertG(ctx, boil.Infer())
-	if err != nil {
-		t.Errorf("test: insert video: %s", err)
-		return
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := repository.AddVideo(tt.args.videoDTO)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddVideo() error: %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddVideo() got: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if tt.wantErr {
@@ -196,8 +182,8 @@ func TestRepository_GetVideos(t *testing.T) {
 				t.Errorf("GetVideos() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			gotRemovedTimes := removeTimes(got)
-			videosRemovedTimes := removeTimes(tt.want.videos)
+			gotRemovedTimes := removeUnwantedStuff(got)
+			videosRemovedTimes := removeUnwantedStuff(tt.want.videos)
 			assert.Equal(t, gotRemovedTimes, videosRemovedTimes, "they should be equal")
 		})
 	}
@@ -254,8 +240,8 @@ func TestRepository_FetchVideo(t *testing.T) {
 				t.Errorf("FetchVideo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			gotRemovedTimes := removeTimes(got)
-			videoRemovedTimes := removeTimes(tt.want.video)
+			gotRemovedTimes := removeUnwantedStuff(got)
+			videoRemovedTimes := removeUnwantedStuff(tt.want.video)
 			assert.Equal(t, gotRemovedTimes, videoRemovedTimes, "they should be equal")
 		})
 	}
@@ -319,11 +305,44 @@ func TestRepository_UpdateVideo(t *testing.T) {
 		return
 	}
 	defer teardownTestCase(t)
-	fakeExistTitle := testdata.FakeVideos[0].Title
 	const (
 		fakeDoesNotExistTitle     = "fakeDoesNotExistTitle"
+		fakeExistGenreName        = "fakeExistGenreName"
+		fakeDesc                  = "fakeDesc"
+		fakeExistCategoryName     = "fakeExistCategoryName"
+		fakeOpened                = false
 		fakeNewDoestNotExistTitle = "fakeNewDoestNotExistTitle"
 	)
+	*fakeYearLaunched = 2020
+	*fakeDuration = 90
+	*fakeRating = crud.TwelveRating
+	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
+	fakeDoesNotExistGenreDTO := crud.GenreDTO{Name: faker.FirstName()}
+	fakeExistCategoryDTO := crud.CategoryDTO{Name: fakeExistCategoryName}
+	fakeExistGenreDTO := crud.GenreDTO{Name: fakeExistGenreName}
+	fakeExistTitle := strings.ToLower(testdata.FakeVideos[0].Title)
+	fakeExistVideoDTO := crud.VideoDTO{
+		Title:        fakeExistTitle,
+		Description:  fakeDesc,
+		YearLaunched: fakeYearLaunched,
+		Opened:       fakeOpened,
+		Rating:       fakeRating,
+		Duration:     fakeDuration,
+		Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+		Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+	}
+	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+		t.Errorf("test: insert category: %s", err)
+		return
+	}
+	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+		t.Errorf("test: insert genre: %s", err)
+		return
+	}
+	if err := repository.AddVideo(fakeExistVideoDTO); err != nil {
+		t.Errorf("test: insert category: %s", err)
+		return
+	}
 	type fields struct {
 		ctx context.Context
 	}
@@ -350,11 +369,36 @@ func TestRepository_UpdateVideo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When title exists and VideoDTO is right",
+			name: "When VideoDTO is with wrong genres",
 			args: args{
 				fakeExistTitle,
 				crud.VideoDTO{
-					Title: fakeNewDoestNotExistTitle,
+					Title:        fakeDoesNotExistTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+				},
+			},
+			want:    fmt.Errorf("none category is %w", logger.ErrNotFound),
+			wantErr: true,
+		},
+		{
+			name: "When everything is right",
+			args: args{
+				fakeExistTitle,
+				crud.VideoDTO{
+					Title:        fakeDoesNotExistTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
 			want:    nil,
@@ -365,10 +409,10 @@ func TestRepository_UpdateVideo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := repository.UpdateVideo(tt.args.title, tt.args.videoDTO)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UpdateVideo() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("UpdateVideo() got: %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(err, tt.want) {
+			if err != nil && err.Error() != tt.want.Error() {
 				t.Errorf("UpdateVideo() got: %v, want: %v", err, tt.want)
 			}
 		})
@@ -433,7 +477,7 @@ func TestVideo_isValidUUIDHook(t *testing.T) {
 	}
 }
 
-func removeTimes(i interface{}) interface{} {
+func removeUnwantedStuff(i interface{}) interface{} {
 	if i == nil || reflect.ValueOf(i).IsZero() {
 		return i
 	}

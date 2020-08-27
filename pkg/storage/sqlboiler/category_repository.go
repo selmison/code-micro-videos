@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -17,31 +16,52 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (r Repository) UpdateCategory(name string, c crud.CategoryDTO) error {
+func (r Repository) UpdateCategory(name string, categoryDTO crud.CategoryDTO) error {
 	category, err := r.FetchCategory(name)
 	if err != nil {
 		return err
 	}
-	nameDTO := strings.ToLower(strings.TrimSpace(c.Name))
-	category.Name = nameDTO
-	DescriptionDTO := strings.TrimSpace(c.Description)
-	category.Description = null.String{String: DescriptionDTO, Valid: true}
-	_, err = category.UpdateG(r.ctx, boil.Infer())
+	category.Name = categoryDTO.Name
+	category.Description = null.String{String: categoryDTO.Description, Valid: true}
+	tx, err := boil.BeginTx(r.ctx, nil)
 	if err != nil {
-		return fmt.Errorf("%s %w", nameDTO, logger.ErrAlreadyExists)
+		return err
+	}
+	_, err = category.Update(r.ctx, tx, boil.Infer())
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return fmt.Errorf("%s %w", categoryDTO.Name, logger.ErrAlreadyExists)
+	}
+	if err := r.setGenresInCategory(categoryDTO.Genres, category, tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (r Repository) AddCategory(categoryDTO crud.CategoryDTO) error {
-	newCat := models.Category{
+	category := models.Category{
 		ID:          uuid.New().String(),
-		Name:        strings.ToLower(strings.TrimSpace(categoryDTO.Name)),
+		Name:        categoryDTO.Name,
 		Description: null.String{String: categoryDTO.Description, Valid: true},
 	}
-	err := newCat.InsertG(r.ctx, boil.Infer())
+	tx, err := boil.BeginTx(r.ctx, nil)
+	if err != nil {
+		return err
+	}
+	err = category.Insert(r.ctx, tx, boil.Infer())
 	if err != nil {
 		var e *pq.Error
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
 		if errors.As(err, &e) {
 			if e.Code.Name() == "unique_violation" {
 				return fmt.Errorf("name '%s' %w", categoryDTO.Name, logger.ErrAlreadyExists)
@@ -49,6 +69,41 @@ func (r Repository) AddCategory(categoryDTO crud.CategoryDTO) error {
 				return fmt.Errorf("%s: %w", "method Repository.AddCategory(categoryDTO)", err)
 			}
 		}
+	}
+	if err := r.setGenresInCategory(categoryDTO.Genres, category, tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+func (r Repository) setGenresInCategory(genres []crud.GenreDTO, category models.Category, tx *sql.Tx) error {
+	if genres == nil || len(genres) == 0 {
+		return nil
+	}
+	clause := "name=?"
+	genreNames := make([]interface{}, len(genres))
+	for i, genre := range genres {
+		if i > 0 {
+			clause = fmt.Sprintf("name=? OR %s", clause)
+		}
+		genreNames[i] = genre.Name
+	}
+	genreSlice, err := models.Genres(
+		Where(clause, genreNames...),
+	).AllG(r.ctx)
+	if err != nil {
+		return err
+	}
+	if len(genreSlice) == 0 {
+		return fmt.Errorf("none genre is %w", logger.ErrNotFound)
+	}
+	if err := category.SetGenres(r.ctx, tx, false, genreSlice...); err != nil {
+		return fmt.Errorf("insert a new slice of genres and assign them to the category: %s", err)
 	}
 	return nil
 }
@@ -75,7 +130,6 @@ func (r Repository) GetCategories(limit int) (models.CategorySlice, error) {
 }
 
 func (r Repository) FetchCategory(name string) (models.Category, error) {
-	name = strings.ToLower(strings.TrimSpace(name))
 	categorySlice, err := models.Categories(Where("is_validated=?", true), models.CategoryWhere.Name.EQ(name)).AllG(r.ctx)
 	if err != nil {
 		return models.Category{}, err

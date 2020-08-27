@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -38,6 +39,10 @@ func (s *server) handleCategoryCreate() http.HandlerFunc {
 			}
 			if errors.Is(err, logger.ErrAlreadyExists) {
 				s.errStatusConflict(w, err)
+				return
+			}
+			if errors.Is(err, logger.ErrNotFound) {
+				s.errNotFound(w, err)
 				return
 			}
 			s.errInternalServer(w, err)
@@ -116,6 +121,7 @@ func (s *server) handleCategoryUpdate() http.HandlerFunc {
 		params := httprouter.ParamsFromContext(r.Context())
 		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
 			err = s.svc.UpdateCategory(categoryName, *categoryDTO)
+			fmt.Println(err)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)

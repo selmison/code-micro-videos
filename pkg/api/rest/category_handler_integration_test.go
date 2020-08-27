@@ -18,67 +18,6 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
-func Test_integration_CategoryCreate(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, nil)
-	if err != nil {
-		t.Errorf("test: failed to setup test case: %v\n", err)
-		return
-	}
-	defer teardownTestCase(t)
-	fakeCategory := `{"name": "action", "description": "actions films"}`
-	type request struct {
-		url         string
-		contentType string
-		body        io.Reader
-	}
-	type response struct {
-		status int
-		body   string
-	}
-	tests := []struct {
-		name    string
-		req     request
-		want    response
-		wantErr bool
-	}{
-		{
-			name: "create a category",
-			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "categories"),
-				"application/json; charset=UTF-8",
-				strings.NewReader(fakeCategory),
-			},
-			want: response{
-				status: http.StatusCreated,
-				body:   `"Created"`,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := http.Post(tt.req.url, tt.req.contentType, tt.req.body)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetCategories() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != nil {
-				if got.StatusCode != tt.want.status {
-					t.Errorf("statusCode: %v, want: %v", got.StatusCode, tt.want.status)
-				}
-				bs, err := ioutil.ReadAll(got.Body)
-				if err != nil {
-					t.Errorf("read body: %v", err)
-				}
-				data := strings.TrimSpace(string(bs))
-				if data != tt.want.body {
-					t.Errorf("Body: %v, want: %v", data, tt.want.body)
-				}
-			}
-		})
-	}
-}
-
 func Test_RestApi_Post_Categories(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {

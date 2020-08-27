@@ -85,17 +85,6 @@ func TestAddCategory(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "When CategoryDTO is without genres",
-			args: args{
-				crud.CategoryDTO{
-					Name:        fakeName,
-					Description: fakeDescription,
-				},
-			},
-			want:    returns{err: fmt.Errorf("'Genres' field %w", logger.ErrIsRequired)},
-			wantErr: true,
-		},
-		{
 			name: "When CategoryDTO is right",
 			args: args{crud.CategoryDTO{
 				Name:        fakeName,
@@ -180,13 +169,11 @@ func Test_service_RemoveCategory(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "When name is not found" {
+			if tt.name == "When name is not found" ||
+				tt.name == "When name is found" {
+				name := strings.ToLower(strings.TrimSpace(tt.args.name))
 				mockR.EXPECT().
-					RemoveCategory(tt.args.name).
-					Return(tt.want)
-			} else if tt.name == "When name is found" {
-				mockR.EXPECT().
-					RemoveCategory(tt.args.name).
+					RemoveCategory(name).
 					Return(tt.want)
 			}
 			s := crud.NewService(mockR)
@@ -263,18 +250,6 @@ func Test_service_UpdateCategory(t *testing.T) {
 				},
 			},
 			want:    logger.ErrIsRequired,
-			wantErr: true,
-		},
-		{
-			name: "When CategoryDTO is without genres",
-			args: args{
-				fakeExistName,
-				crud.CategoryDTO{
-					Name:        fakeName,
-					Description: fakeDescription,
-				},
-			},
-			want:    fmt.Errorf("'Genres' field %w", logger.ErrIsRequired),
 			wantErr: true,
 		},
 		{
