@@ -12,10 +12,6 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-type service struct {
-	r Repository
-}
-
 func (s service) RemoveCategory(name string) error {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if len(name) == 0 {

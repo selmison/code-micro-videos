@@ -10,10 +10,12 @@ import (
 
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/pkg/logger"
+	"github.com/selmison/code-micro-videos/pkg/storage/files"
 )
 
 type Repository struct {
-	ctx context.Context
+	ctx       context.Context
+	repoFiles files.Repository
 }
 
 func NewRepository(ctx context.Context, db *sql.DB) *Repository {
@@ -35,8 +37,10 @@ func NewRepository(ctx context.Context, db *sql.DB) *Repository {
 	models.AddVideoHook(boil.BeforeUpdateHook, isValidUUIDVideoHook)
 	models.AddVideoHook(boil.BeforeUpsertHook, isValidUUIDVideoHook)
 
-	return &Repository{ctx}
+	repoFiles := files.NewRepository()
+	return &Repository{ctx, repoFiles}
 }
+
 func isValidUUIDCategoryHook(_ context.Context, _ boil.ContextExecutor, c *models.Category) error {
 	if !isValidUUID(c.ID) {
 		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)

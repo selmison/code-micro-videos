@@ -106,7 +106,7 @@ func TestRepository_AddVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.AddVideo(tt.args.videoDTO)
+			_, err := repository.AddVideo(tt.args.videoDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddVideo() got: %v, wantErr %v", err, tt.wantErr)
 				return
@@ -339,7 +339,7 @@ func TestRepository_UpdateVideo(t *testing.T) {
 		t.Errorf("test: insert genre: %s", err)
 		return
 	}
-	if err := repository.AddVideo(fakeExistVideoDTO); err != nil {
+	if _, err := repository.AddVideo(fakeExistVideoDTO); err != nil {
 		t.Errorf("test: insert category: %s", err)
 		return
 	}
@@ -407,7 +407,7 @@ func TestRepository_UpdateVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.UpdateVideo(tt.args.title, tt.args.videoDTO)
+			_, err := repository.UpdateVideo(tt.args.title, tt.args.videoDTO)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateVideo() got: %v, wantErr %v", err, tt.wantErr)
 				return

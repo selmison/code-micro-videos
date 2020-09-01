@@ -34,7 +34,7 @@ func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
 	}
 	videoDTO.Title = strings.ToLower(strings.TrimSpace(videoDTO.Title))
 	videoDTO.Description = strings.TrimSpace(videoDTO.Description)
-	if err := s.r.UpdateVideo(title, videoDTO); err != nil {
+	if _, err := s.r.UpdateVideo(title, videoDTO); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("%s: %w", title, logger.ErrNotFound)
 		}
@@ -49,7 +49,10 @@ func (s service) AddVideo(videoDTO VideoDTO) error {
 	if err := videoDTO.Validate(); err != nil {
 		return err
 	}
-	return s.r.AddVideo(videoDTO)
+	if _, err := s.r.AddVideo(videoDTO); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s service) GetVideos(limit int) (models.VideoSlice, error) {

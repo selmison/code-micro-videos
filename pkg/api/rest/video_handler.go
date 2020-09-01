@@ -31,7 +31,7 @@ func (s *server) handleVideoCreate() http.HandlerFunc {
 				s.errInternalServer(w, err)
 			}
 		}
-		if err := s.svc.AddVideo(*videoDTO); err != nil {
+		if _, err := s.svc.AddVideo(*videoDTO); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
 				return
@@ -120,7 +120,7 @@ func (s *server) handleVideoUpdate() http.HandlerFunc {
 		}
 		params := httprouter.ParamsFromContext(r.Context())
 		videoTitle := params.ByName("title")
-		err = s.svc.UpdateVideo(videoTitle, *videoDTO)
+		_, err = s.svc.UpdateVideo(videoTitle, *videoDTO)
 		if err != nil {
 			if errors.Is(err, logger.ErrNotFound) {
 				s.errNotFound(w, err)

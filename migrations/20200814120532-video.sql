@@ -8,6 +8,7 @@ CREATE TABLE videos
     opened        boolean DEFAULT false,
     rating        smallint     NOT NULL,
     duration      smallint     NOT NULL,
+    video_file    varchar(255),
     created_at    timestamp,
     updated_at    timestamp,
     deleted_at    timestamp

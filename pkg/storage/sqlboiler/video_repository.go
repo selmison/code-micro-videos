@@ -1,6 +1,7 @@
 package sqlboiler
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -16,26 +17,26 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) error {
+func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID, error) {
 	video, err := r.FetchVideo(title)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 	tx, err := boil.BeginTx(r.ctx, nil)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 	if err := r.setCategoriesInVideo(videoDTO.Categories, video, tx); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
-		return err
+		return uuid.UUID{}, err
 	}
 	if err := r.setGenresInVideo(videoDTO.Genres, video, tx); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
-		return err
+		return uuid.UUID{}, err
 	}
 	video.Title = videoDTO.Title
 	video.Description = videoDTO.Description
@@ -43,63 +44,86 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) error {
 	video.Opened = null.Bool{Bool: videoDTO.Opened, Valid: true}
 	video.Rating = int16(*videoDTO.Rating)
 	video.Duration = *videoDTO.Duration
+	fileName := fmt.Sprintf("%x", sha256.Sum256(videoDTO.VideoFile))
+	video.VideoFile = null.String{String: fileName, Valid: true}
 	_, err = video.Update(r.ctx, tx, boil.Infer())
 	if err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
-		return fmt.Errorf("%s %w", videoDTO.Title, logger.ErrAlreadyExists)
+		return uuid.UUID{}, fmt.Errorf("%s %w", videoDTO.Title, logger.ErrAlreadyExists)
+	}
+	videoID, err := uuid.Parse(video.ID)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("could not parse video.ID: %v", err)
+	}
+	if _, err := r.repoFiles.UpdateFileToVideo(videoID, fileName, videoDTO.VideoFile); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return uuid.UUID{}, err
+		}
+		return uuid.UUID{}, err
 	}
 	if err := tx.Commit(); err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
-	return nil
+	return videoID, nil
 }
 
-func (r Repository) AddVideo(videoDTO crud.VideoDTO) error {
+func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
+	id := uuid.New()
+	fileName := fmt.Sprintf("%x", sha256.Sum256(videoDTO.VideoFile))
 	video := models.Video{
-		ID:           uuid.New().String(),
+		ID:           id.String(),
 		Title:        videoDTO.Title,
 		Description:  videoDTO.Description,
 		YearLaunched: *videoDTO.YearLaunched,
 		Opened:       null.Bool{Bool: videoDTO.Opened, Valid: true},
 		Rating:       int16(*videoDTO.Rating),
 		Duration:     *videoDTO.Duration,
+		VideoFile:    null.String{String: fileName, Valid: true},
 	}
 	tx, err := boil.BeginTx(r.ctx, nil)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 	err = video.Insert(r.ctx, tx, boil.Infer())
 	if err != nil {
 		var e *pq.Error
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
 		if errors.As(err, &e) {
 			if e.Code.Name() == "unique_violation" {
-				return fmt.Errorf("title '%s' %w", videoDTO.Title, logger.ErrAlreadyExists)
+				return uuid.UUID{}, fmt.Errorf("title '%s' %w", videoDTO.Title, logger.ErrAlreadyExists)
 			} else {
-				return fmt.Errorf("%s: %w", "method Repository.AddVideo(videoDTO)", err)
+				return uuid.UUID{}, fmt.Errorf("%s: %w", "method Repository.AddVideo(videoDTO)", err)
 			}
 		}
 	}
 	if err := r.setCategoriesInVideo(videoDTO.Categories, video, tx); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
-		return err
+		return uuid.UUID{}, err
 	}
 	if err := r.setGenresInVideo(videoDTO.Genres, video, tx); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return uuid.UUID{}, err
 		}
-		return err
+		return uuid.UUID{}, err
+	}
+	if videoDTO.VideoFile != nil {
+		if err := r.repoFiles.SaveFileToVideo(id, fileName, videoDTO.VideoFile); err != nil {
+			if err := tx.Rollback(); err != nil {
+				return uuid.UUID{}, err
+			}
+			return uuid.UUID{}, fmt.Errorf("could not save file to video: %v", err)
+		}
 	}
 	if err := tx.Commit(); err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
-	return nil
+	return id, nil
 }
 
 func (r Repository) setCategoriesInVideo(categories []crud.CategoryDTO, video models.Video, tx *sql.Tx) error {

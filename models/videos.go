@@ -24,16 +24,17 @@ import (
 
 // Video is an object representing the database table.
 type Video struct {
-	ID           string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Title        string    `boil:"title" json:"title" toml:"title" yaml:"title"`
-	Description  string    `boil:"description" json:"description" toml:"description" yaml:"description"`
-	YearLaunched int16     `boil:"year_launched" json:"year_launched" toml:"year_launched" yaml:"year_launched"`
-	Opened       null.Bool `boil:"opened" json:"opened,omitempty" toml:"opened" yaml:"opened,omitempty"`
-	Rating       int16     `boil:"rating" json:"rating" toml:"rating" yaml:"rating"`
-	Duration     int16     `boil:"duration" json:"duration" toml:"duration" yaml:"duration"`
-	CreatedAt    null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt    null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt    null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ID           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Title        string      `boil:"title" json:"title" toml:"title" yaml:"title"`
+	Description  string      `boil:"description" json:"description" toml:"description" yaml:"description"`
+	YearLaunched int16       `boil:"year_launched" json:"year_launched" toml:"year_launched" yaml:"year_launched"`
+	Opened       null.Bool   `boil:"opened" json:"opened,omitempty" toml:"opened" yaml:"opened,omitempty"`
+	Rating       int16       `boil:"rating" json:"rating" toml:"rating" yaml:"rating"`
+	Duration     int16       `boil:"duration" json:"duration" toml:"duration" yaml:"duration"`
+	VideoFile    null.String `boil:"video_file" json:"video_file,omitempty" toml:"video_file" yaml:"video_file,omitempty"`
+	CreatedAt    null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt    null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	DeletedAt    null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *videoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L videoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -47,6 +48,7 @@ var VideoColumns = struct {
 	Opened       string
 	Rating       string
 	Duration     string
+	VideoFile    string
 	CreatedAt    string
 	UpdatedAt    string
 	DeletedAt    string
@@ -58,6 +60,7 @@ var VideoColumns = struct {
 	Opened:       "opened",
 	Rating:       "rating",
 	Duration:     "duration",
+	VideoFile:    "video_file",
 	CreatedAt:    "created_at",
 	UpdatedAt:    "updated_at",
 	DeletedAt:    "deleted_at",
@@ -96,6 +99,7 @@ var VideoWhere = struct {
 	Opened       whereHelpernull_Bool
 	Rating       whereHelperint16
 	Duration     whereHelperint16
+	VideoFile    whereHelpernull_String
 	CreatedAt    whereHelpernull_Time
 	UpdatedAt    whereHelpernull_Time
 	DeletedAt    whereHelpernull_Time
@@ -107,6 +111,7 @@ var VideoWhere = struct {
 	Opened:       whereHelpernull_Bool{field: "\"videos\".\"opened\""},
 	Rating:       whereHelperint16{field: "\"videos\".\"rating\""},
 	Duration:     whereHelperint16{field: "\"videos\".\"duration\""},
+	VideoFile:    whereHelpernull_String{field: "\"videos\".\"video_file\""},
 	CreatedAt:    whereHelpernull_Time{field: "\"videos\".\"created_at\""},
 	UpdatedAt:    whereHelpernull_Time{field: "\"videos\".\"updated_at\""},
 	DeletedAt:    whereHelpernull_Time{field: "\"videos\".\"deleted_at\""},
@@ -136,8 +141,8 @@ func (*videoR) NewStruct() *videoR {
 type videoL struct{}
 
 var (
-	videoAllColumns            = []string{"id", "title", "description", "year_launched", "opened", "rating", "duration", "created_at", "updated_at", "deleted_at"}
-	videoColumnsWithoutDefault = []string{"id", "title", "description", "year_launched", "rating", "duration", "created_at", "updated_at", "deleted_at"}
+	videoAllColumns            = []string{"id", "title", "description", "year_launched", "opened", "rating", "duration", "video_file", "created_at", "updated_at", "deleted_at"}
+	videoColumnsWithoutDefault = []string{"id", "title", "description", "year_launched", "rating", "duration", "video_file", "created_at", "updated_at", "deleted_at"}
 	videoColumnsWithDefault    = []string{"opened"}
 	videoPrimaryKeyColumns     = []string{"id"}
 )

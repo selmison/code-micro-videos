@@ -81,6 +81,7 @@ func (r Repository) AddCategory(categoryDTO crud.CategoryDTO) error {
 	}
 	return nil
 }
+
 func (r Repository) setGenresInCategory(genres []crud.GenreDTO, category models.Category, tx *sql.Tx) error {
 	if genres == nil || len(genres) == 0 {
 		return nil

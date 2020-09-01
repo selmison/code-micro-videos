@@ -615,7 +615,7 @@ func (genreL) LoadVideos(ctx context.Context, e boil.ContextExecutor, singular b
 		one := new(Video)
 		var localJoinCol string
 
-		err = results.Scan(&one.ID, &one.Title, &one.Description, &one.YearLaunched, &one.Opened, &one.Rating, &one.Duration, &one.CreatedAt, &one.UpdatedAt, &one.DeletedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.Title, &one.Description, &one.YearLaunched, &one.Opened, &one.Rating, &one.Duration, &one.VideoFile, &one.CreatedAt, &one.UpdatedAt, &one.DeletedAt, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for videos")
 		}
