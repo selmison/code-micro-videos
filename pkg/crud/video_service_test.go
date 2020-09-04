@@ -51,6 +51,7 @@ func TestAddVideo(t *testing.T) {
 	}
 	type returns struct {
 		video models.Video
+		id    uuid.UUID
 		err   error
 	}
 	type args struct {
@@ -179,10 +180,10 @@ func TestAddVideo(t *testing.T) {
 				tt.args.dto.Title = strings.ToLower(strings.TrimSpace(tt.args.dto.Title))
 				mockR.EXPECT().
 					AddVideo(tt.args.dto).
-					Return(tt.want.err)
+					Return(tt.want.id, tt.want.err)
 			}
 			s := crud.NewService(mockR)
-			err := s.AddVideo(tt.args.dto)
+			_, err := s.AddVideo(tt.args.dto)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddVideo() error = '%v', wantErr '%v'", err, tt.wantErr)
 				return
@@ -282,11 +283,15 @@ func Test_service_UpdateVideo(t *testing.T) {
 		title string
 		dto   crud.VideoDTO
 	}
+	type returns struct {
+		id  uuid.UUID
+		err error
+	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    error
+		want    returns
 		wantErr bool
 	}{
 		{
@@ -297,13 +302,13 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Title: faker.Name(),
 				},
 			},
-			want:    fmt.Errorf("'title' %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'title' %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
 			name:    "When VideoDTO is not provided",
 			args:    args{fakeExistTitle, crud.VideoDTO{}},
-			want:    fmt.Errorf("'Title' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -317,7 +322,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
 				}},
-			want:    fmt.Errorf("'Title' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -331,7 +336,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
 				}},
-			want:    fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'YearLaunched' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -345,7 +350,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Rating:       nil,
 					Duration:     fakeDuration,
 				}},
-			want:    fmt.Errorf("'Rating' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'Rating' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -360,7 +365,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Duration:     nil,
 				},
 			},
-			want:    fmt.Errorf("'Duration' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'Duration' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -378,7 +383,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategory},
 				},
 			},
-			want:    logger.ErrIsRequired,
+			want:    returns{err: logger.ErrIsRequired},
 			wantErr: true,
 		},
 		{
@@ -394,7 +399,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Duration:     fakeDuration,
 				},
 			},
-			want:    fmt.Errorf("'Categories' field %w", logger.ErrIsRequired),
+			want:    returns{err: fmt.Errorf("'Categories' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
@@ -411,7 +416,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
-			want:    fmt.Errorf("%s: %w", fakeDoesNotExistTitle, logger.ErrNotFound),
+			want:    returns{err: fmt.Errorf("%s: %w", fakeDoesNotExistTitle, logger.ErrNotFound)},
 			wantErr: true,
 		},
 		{
@@ -428,7 +433,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
 				},
 			},
-			want:    nil,
+			want:    returns{err: nil},
 			wantErr: false,
 		},
 	}
@@ -451,21 +456,17 @@ func Test_service_UpdateVideo(t *testing.T) {
 				title := strings.ToLower(strings.TrimSpace(tt.args.title))
 				mockR.EXPECT().
 					UpdateVideo(title, dto).
-					Return(tt.want)
+					Return(tt.want.id, tt.want.err)
 			}
 			s := crud.NewService(mockR)
-			err := s.UpdateVideo(tt.args.title, tt.args.dto)
+			_, err := s.UpdateVideo(tt.args.title, tt.args.dto)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateVideo() error: %v, wantErr: %v", err, tt.wantErr)
 				return
 			}
-			if err != nil && err.Error() != tt.want.Error() {
+			if err != nil && err.Error() != tt.want.err.Error() {
 				t.Errorf("AddVideo() got: \"%v\", want: \"%v\"", err, tt.want)
 			}
-
-			//if !errors.Is(err, tt.want) {
-			//	t.Errorf("UpdateVideo() got: '%v', want: '%v'", err, tt.want)
-			//}
 		})
 	}
 }

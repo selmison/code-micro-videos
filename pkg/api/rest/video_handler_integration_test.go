@@ -3,12 +3,16 @@
 package rest_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"mime/multipart"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -18,41 +22,38 @@ import (
 
 	"github.com/bxcodec/faker/v3"
 
+	"github.com/selmison/code-micro-videos/pkg/api/rest"
 	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/storage/files/memory"
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
 func Test_RestApi_Post_Videos(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
-		t.Errorf("test: failed to setup test case: %v\n", err)
-		return
+		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
+	seed, teardownTestCase, err := memory.SetupFileTestCase()
+	if err != nil {
+		t.Fatalf("test: failed to setup files test case: %v\n", err)
+	}
 	const (
 		fakeCategoryIndex = 0
 		fakeGenreIndex    = 0
 	)
 	fakeUrl := fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos")
-	fakeExistCategoryDTO := toJSON([]crud.CategoryDTO{testdata.FakeCategoriesDTO[fakeCategoryIndex]})
-	fakeDoesNotExistCategoryDTO := toJSON(
-		[]crud.CategoryDTO{
-			{
-				Name:        faker.FirstName(),
-				Description: faker.Sentence(),
-			},
-		})
-	fakeExistGenreDTO := toJSON([]crud.GenreDTO{testdata.FakeGenresDTO[fakeGenreIndex]})
-	fakeDoesNotExistGenreDTO := toJSON(
-		[]crud.GenreDTO{
-			{
-				Name: faker.FirstName(),
-			},
-		})
+	fakeExistGenreName := testdata.FakeGenresDTO[fakeGenreIndex].Name
+	fakeExistCategoryName := testdata.FakeCategoriesDTO[fakeCategoryIndex].Name
+	fakeExistCategoryDescription := testdata.FakeCategoriesDTO[fakeCategoryIndex].Description
+	fakeDoesNotExistGenreName := faker.FirstName()
+	fakeDoesNotExistCategoryName := faker.FirstName()
+	fakeDoesNotExistCategoryDescription := faker.Sentence()
 	type request struct {
-		url         string
-		contentType string
-		body        io.Reader
+		url             string
+		fields          map[string]string
+		fieldNameToFile string
+		pathFile        string
 	}
 	type response struct {
 		status int
@@ -67,19 +68,20 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When the title in body is blank",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-					"",
-					faker.Sentence(),
-					2020,
-					false,
-					crud.TenRating,
-					250,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    "",
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusBadRequest,
@@ -90,18 +92,19 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When the title in body is omitted",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-					faker.Sentence(),
-					2020,
-					false,
-					crud.TenRating,
-					250,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusBadRequest,
@@ -112,18 +115,19 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When the year_launched in body is omitted",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-					faker.Name(),
-					faker.Sentence(),
-					false,
-					crud.TenRating,
-					250,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusBadRequest,
@@ -134,40 +138,42 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When the opened in body is omitted",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-					"",
-					faker.Sentence(),
-					2020,
-					crud.TenRating,
-					250,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
-				status: http.StatusBadRequest,
-				body:   http.StatusText(http.StatusBadRequest),
+				status: http.StatusCreated,
+				body:   http.StatusText(http.StatusCreated),
 			},
 			wantErr: false,
 		},
 		{
 			name: "When the rating in body is omitted",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "duration": %d, "genres":%s, "categories":%s}`,
-					faker.Name(),
-					faker.Sentence(),
-					2020,
-					false,
-					250,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusBadRequest,
@@ -178,18 +184,19 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When the duration in body is blank",
 			req: request{
-				fakeUrl,
-				"application/json; charset=UTF-8",
-				strings.NewReader(fmt.Sprintf(
-					`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "genres":%s, "categories":%s}`,
-					faker.Name(),
-					faker.Sentence(),
-					2020,
-					false,
-					crud.TenRating,
-					fakeDoesNotExistGenreDTO,
-					fakeDoesNotExistCategoryDTO,
-				)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusBadRequest,
@@ -200,20 +207,20 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When VideoDTO is with wrong categories and genres",
 			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos"),
-				"application/json; charset=UTF-8",
-				strings.NewReader(
-					fmt.Sprintf(
-						`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-						faker.Name(),
-						faker.Sentence(),
-						2020,
-						false,
-						crud.TenRating,
-						250,
-						fakeDoesNotExistGenreDTO,
-						fakeDoesNotExistCategoryDTO,
-					)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeDoesNotExistGenreName,
+					"categories.0.name":        fakeDoesNotExistCategoryName,
+					"categories.0.description": fakeDoesNotExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusNotFound,
@@ -224,24 +231,24 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 		{
 			name: "When everything is right",
 			req: request{
-				fmt.Sprintf("http://%s/%s", cfg.AddressServer, "videos"),
-				"application/json; charset=UTF-8",
-				strings.NewReader(
-					fmt.Sprintf(
-						`{"title": "%s", "description": "%s", "year_launched": %d, "opened": %t, "rating": %d, "duration": %d, "genres":%s, "categories":%s}`,
-						faker.Name(),
-						faker.Sentence(),
-						2020,
-						false,
-						crud.TenRating,
-						250,
-						fakeExistGenreDTO,
-						fakeExistCategoryDTO,
-					)),
+				url: fakeUrl,
+				fields: map[string]string{
+					"title":                    faker.Name(),
+					"description":              faker.Sentence(),
+					"year_launched":            "2020",
+					"opened":                   "false",
+					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"duration":                 "250",
+					"genres.0.name":            fakeExistGenreName,
+					"categories.0.name":        fakeExistCategoryName,
+					"categories.0.description": fakeExistCategoryDescription,
+				},
+				fieldNameToFile: rest.VideoFileField,
+				pathFile:        seed.FakeTmpFilePath,
 			},
 			want: response{
 				status: http.StatusCreated,
-				body:   string(toJSON(http.StatusText(http.StatusCreated))),
+				body:   http.StatusText(http.StatusCreated),
 			},
 			wantErr: false,
 		},
@@ -261,7 +268,13 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := http.Post(tt.req.url, tt.req.contentType, tt.req.body)
+			got, err := postMultipartWithFile(
+				tt.req.url,
+				tt.req.fields,
+				seed,
+				tt.req.fieldNameToFile,
+				tt.req.pathFile,
+			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error: %v, wantErr: %v", err, tt.wantErr)
 				return
@@ -356,7 +369,7 @@ func Test_RestApi_Get_Video(t *testing.T) {
 	}
 	defer teardownTestCase(t)
 	fakeExistTitle := testdata.FakeVideos[0].Title
-	fakeDoesNotExistName := "doesNotExistName"
+	fakeDoesNotExistTitle := "fakeDoesNotExistTitle"
 	fakeExistVideoDTO := testdata.FakeVideosDTO[0]
 	fakeUrl := func(title string) string {
 		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
@@ -378,7 +391,7 @@ func Test_RestApi_Get_Video(t *testing.T) {
 		{
 			name: "When title doesn't exist",
 			req: request{
-				url:         fakeUrl(fakeDoesNotExistName),
+				url:         fakeUrl(fakeDoesNotExistTitle),
 				contentType: "application/json; charset=UTF-8",
 			},
 			want: response{
@@ -431,12 +444,7 @@ func Test_RestApi_Get_Video(t *testing.T) {
 						t.Errorf("unmarshal data: %v", err)
 						return
 					}
-					assert.Equal(
-						t,
-						videoBody,
-						fakeExistVideoDTO,
-						"they should be equal",
-					)
+					assert.Equal(t, videoBody, fakeExistVideoDTO, "they should be equal")
 					return
 				}
 			}
@@ -682,4 +690,42 @@ func Test_RestApi_Update_Video(t *testing.T) {
 			}
 		})
 	}
+}
+
+func postMultipartWithFile(
+	uri string,
+	fields map[string]string,
+	fileSeed *memory.FileSeed,
+	fieldNameToFile,
+	pathFile string,
+) (*http.Response, error) {
+	var buffer bytes.Buffer
+	multipartWriter := multipart.NewWriter(&buffer)
+	for fieldName, value := range fields {
+		if err := multipartWriter.WriteField(fieldName, value); err != nil {
+			return nil, fmt.Errorf("could not write field: %v\n", err)
+		}
+	}
+	fileWriter, err := multipartWriter.CreateFormFile(fieldNameToFile, pathFile)
+	if err != nil {
+		return nil, err
+	}
+	file, err := fileSeed.FakeAfero.ReadFile(pathFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not read file: %v\n", err)
+	}
+	if _, err = fileWriter.Write(file); err != nil {
+		return nil, fmt.Errorf("could not copy to file writer: %v\n", err)
+	}
+	if err := multipartWriter.Close(); err != nil {
+		log.Printf("could not close multipartWriter: %v\n", err)
+	}
+	req, err := http.NewRequest(http.MethodPost, uri, &buffer)
+	if err != nil {
+		return nil, fmt.Errorf("could not new request: %v\n", err)
+	}
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	client := &http.Client{}
+	res, err := client.Do(req)
+	return res, err
 }

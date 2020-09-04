@@ -72,6 +72,23 @@ func TestRepository_AddVideo(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "When VideoFileHandler in VideoDTO is omitted",
+			args: args{
+				crud.VideoDTO{
+					Title:        fakeDoesNotExistTitle,
+					Description:  fakeDesc,
+					YearLaunched: fakeYearLaunched,
+					Opened:       fakeOpened,
+					Rating:       fakeRating,
+					Duration:     fakeDuration,
+					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
+					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+				},
+			},
+			want:    returns{logger.ErrNotFound},
+			wantErr: true,
+		},
+		{
 			name: "When VideoDTO is with wrong categories and genres",
 			args: args{
 				crud.VideoDTO{

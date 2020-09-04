@@ -1,7 +1,8 @@
-package files
+package memory
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 func Test_repository_Exists(t *testing.T) {
-	seed, teardownTestCase, err := setupTestCase()
+	seed, teardownTestCase, err := SetupFileTestCase()
 	if err != nil {
 		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
@@ -30,8 +31,8 @@ func Test_repository_Exists(t *testing.T) {
 		{
 			name: "when video does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDDoesNotExist,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDDoesNotExist,
+				fileName: seed.FakeVideoFileNameExists,
 			},
 			want:    false,
 			wantErr: false,
@@ -40,8 +41,8 @@ func Test_repository_Exists(t *testing.T) {
 		{
 			name: "when file does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameDoesNotExist,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeFileNameDoesNotExist,
 			},
 			want:    false,
 			wantErr: false,
@@ -50,8 +51,8 @@ func Test_repository_Exists(t *testing.T) {
 		{
 			name: "whe file exists",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeVideoFileNameExists,
 			},
 			want:    true,
 			wantErr: false,
@@ -60,7 +61,7 @@ func Test_repository_Exists(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := seed.repo.Exists(tt.args.videoID, tt.args.fileName)
+			got, err := seed.Repo.Exists(tt.args.videoID, tt.args.fileName)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Exists() error = %v, wantErr %v\n", err, tt.wantErr)
 			}
@@ -72,11 +73,11 @@ func Test_repository_Exists(t *testing.T) {
 }
 
 func Test_repository_GetFileFromVideo(t *testing.T) {
-	seed, teardownTestCase, err := setupTestCase()
+	seed, teardownTestCase, err := SetupFileTestCase()
 	if err != nil {
 		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
-	sb, err := afero.ReadFile(seed.repo.Afs.Fs, seed.fakeFileExists.Name())
+	sb, err := afero.ReadFile(seed.FakeAfero.Fs, seed.FakeVideoFileExists.Name())
 	if err != nil {
 		t.Fatalf("test: could not read file: %v", err)
 	}
@@ -94,8 +95,8 @@ func Test_repository_GetFileFromVideo(t *testing.T) {
 		{
 			name: "when video does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDDoesNotExist,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDDoesNotExist,
+				fileName: seed.FakeVideoFileNameExists,
 			},
 			want:    nil,
 			wantErr: true,
@@ -103,17 +104,17 @@ func Test_repository_GetFileFromVideo(t *testing.T) {
 		{
 			name: "when file does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameDoesNotExist,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeFileNameDoesNotExist,
 			},
 			want:    nil,
 			wantErr: true,
 		},
 		{
-			name: "whe file exists",
+			name: "when file exists",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeVideoFileNameExists,
 			},
 			want:    sb,
 			wantErr: false,
@@ -122,7 +123,7 @@ func Test_repository_GetFileFromVideo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := seed.repo.GetFileFromVideo(tt.args.videoID, tt.args.fileName)
+			got, err := seed.Repo.GetFileFromVideo(tt.args.videoID, tt.args.fileName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetFileFromVideo() error: %v, wantErr: %v", err, tt.wantErr)
 				return
@@ -135,69 +136,69 @@ func Test_repository_GetFileFromVideo(t *testing.T) {
 }
 
 func Test_repository_SaveFileToVideo(t *testing.T) {
-	seed, teardownTestCase, err := setupTestCase()
+	seed, teardownTestCase, err := SetupFileTestCase()
 	if err != nil {
 		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
 	defer teardownTestCase(t)
 	type args struct {
-		videoID  uuid.UUID
-		fileName string
-		fileData []byte
+		videoID    uuid.UUID
+		fileName   string
+		fileReader io.Reader
 	}
 	tests := []struct {
-		name    string
-		args    args
-		err     error
-		wantErr bool
+		name       string
+		args       args
+		fileExists bool
+		wantErr    bool
 	}{
 		{
 			name: "when video does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDDoesNotExist,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDDoesNotExist,
+				fileName: seed.FakeVideoFileNameExists,
 			},
-			err:     nil,
-			wantErr: false,
+			fileExists: false,
+			wantErr:    false,
 		},
 		{
 			name: "when file does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameDoesNotExist,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeFileNameDoesNotExist,
 			},
-			err:     nil,
-			wantErr: false,
+			fileExists: false,
+			wantErr:    false,
 		},
 		{
 			name: "whe file exists",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeVideoFileNameExists,
 			},
-			err:     nil,
-			wantErr: false,
+			fileExists: true,
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := seed.repo.SaveFileToVideo(tt.args.videoID, tt.args.fileName, tt.args.fileData); (err != nil) != tt.wantErr {
-				t.Fatalf("SaveFileToVideo() error = %v\n, wantErr %v", err, tt.wantErr)
+			if err := seed.Repo.SaveFileToVideo(tt.args.videoID, tt.args.fileName, tt.args.fileReader); (err != nil) != tt.wantErr {
+				t.Fatalf("SaveFileToVideo() error: %v\n, wantErr: %v", err, tt.wantErr)
 			}
 			filePath := fmt.Sprintf("%s%c%s", tt.args.videoID, os.PathSeparator, tt.args.fileName)
-			exists, err := afero.Exists(seed.repo.Afs.Fs, filePath)
+			exists, err := afero.Exists(seed.FakeAfero.Fs, filePath)
 			if err != nil {
 				t.Fatalf("test: could not verify if file exist: %v\n", err)
 			}
-			if !exists {
-				t.Fatalf("test: file '%s' doesn't exist\n", filePath)
+			if exists != tt.fileExists {
+				t.Fatalf("got: '%t' want: %t\n", exists, tt.fileExists)
 			}
 		})
 	}
 }
 
 func Test_repository_UpdateFileToVideo(t *testing.T) {
-	seed, teardownTestCase, err := setupTestCase()
+	seed, teardownTestCase, err := SetupFileTestCase()
 	if err != nil {
 		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
@@ -207,9 +208,9 @@ func Test_repository_UpdateFileToVideo(t *testing.T) {
 		tempDir string
 	}
 	type args struct {
-		videoID  uuid.UUID
-		fileName string
-		fileData []byte
+		videoID    uuid.UUID
+		fileName   string
+		fileReader io.Reader
 	}
 	tests := []struct {
 		name    string
@@ -221,8 +222,8 @@ func Test_repository_UpdateFileToVideo(t *testing.T) {
 		{
 			name: "when file does not exist",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameDoesNotExist,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeFileNameDoesNotExist,
 			},
 			want:    true,
 			wantErr: false,
@@ -230,8 +231,8 @@ func Test_repository_UpdateFileToVideo(t *testing.T) {
 		{
 			name: "whe file exists",
 			args: args{
-				videoID:  seed.fakeVideoIDExists,
-				fileName: seed.fakeFileNameExists,
+				videoID:  seed.FakeVideoIDExists,
+				fileName: seed.FakeVideoFileNameExists,
 			},
 			want:    false,
 			wantErr: false,
@@ -239,7 +240,7 @@ func Test_repository_UpdateFileToVideo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := seed.repo.UpdateFileToVideo(tt.args.videoID, tt.args.fileName, tt.args.fileData)
+			got, err := seed.Repo.UpdateFileToVideo(tt.args.videoID, tt.args.fileName, tt.args.fileReader)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateFileToVideo() error = %v, wantErr %v", err, tt.wantErr)
 				return
