@@ -13,9 +13,9 @@ import (
 var categoryValidate *validator.Validate
 
 type CategoryDTO struct {
-	Name        string     `json:"name" validate:"not_blank"`
-	Description string     `json:"description,omitempty"`
-	Genres      []GenreDTO `json:"genres"`
+	Name        string     `json:"name" schema:"name" validate:"not_blank"`
+	Description string     `json:"description,omitempty" schema:"description"`
+	Genres      []GenreDTO `json:"genres" schema:"genres"`
 }
 
 func MapCategoryToDTO(category models.Category) (*CategoryDTO, error) {

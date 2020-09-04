@@ -38,14 +38,13 @@ func InitApp(ctx context.Context, dbConnStr string) error {
 			log.Fatalln(err)
 		}
 	}()
-	r := sqlboiler.NewRepository(ctx, db)
+	r := sqlboiler.NewRepository(ctx, db, cfg.RepoFiles)
 	svc := crud.NewService(r)
 	return initHttpServer(cfg.AddressServer, svc)
 }
 
 func initHttpServer(address string, crud crud.Service) error {
 	s := newServer(crud)
-	fmt.Printf("The server is on tap now: http://%s\n", address)
 	if err := http.ListenAndServe(address, s); err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func (s *server) bodyToStruct(w http.ResponseWriter, r *http.Request, dto interf
 }
 
 func (s *server) errBadRequest(w http.ResponseWriter, err error) {
-	s.logger.Info(err)
+	s.logger.Warn(err)
 	http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 }
 
@@ -120,12 +119,12 @@ func (s *server) errNotFound(w http.ResponseWriter, err error) {
 }
 
 func (s *server) errUnprocessableEntity(w http.ResponseWriter, err error) {
-	s.logger.Info(err)
+	s.logger.Warn(err)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 }
 
 func (s *server) errStatusConflict(w http.ResponseWriter, err error) {
-	s.logger.Info(err)
+	s.logger.Warn(err)
 	http.Error(w, http.StatusText(http.StatusConflict), http.StatusConflict)
 }

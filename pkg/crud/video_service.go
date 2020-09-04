@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/selmison/code-micro-videos/models"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
@@ -24,35 +26,37 @@ func (s service) RemoveVideo(title string) error {
 	return nil
 }
 
-func (s service) UpdateVideo(title string, videoDTO VideoDTO) error {
+func (s service) UpdateVideo(title string, videoDTO VideoDTO) (uuid.UUID, error) {
 	title = strings.ToLower(strings.TrimSpace(title))
 	if len(title) == 0 {
-		return fmt.Errorf("'title' %w", logger.ErrIsRequired)
+		return uuid.UUID{}, fmt.Errorf("'title' %w", logger.ErrIsRequired)
 	}
 	if err := videoDTO.Validate(); err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 	videoDTO.Title = strings.ToLower(strings.TrimSpace(videoDTO.Title))
 	videoDTO.Description = strings.TrimSpace(videoDTO.Description)
-	if _, err := s.r.UpdateVideo(title, videoDTO); err != nil {
+	id, err := s.r.UpdateVideo(title, videoDTO)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("%s: %w", title, logger.ErrNotFound)
+			return uuid.UUID{}, fmt.Errorf("%s: %w", title, logger.ErrNotFound)
 		}
-		return err
+		return uuid.UUID{}, err
 	}
-	return nil
+	return id, nil
 }
 
-func (s service) AddVideo(videoDTO VideoDTO) error {
+func (s service) AddVideo(videoDTO VideoDTO) (uuid.UUID, error) {
 	videoDTO.Title = strings.ToLower(strings.TrimSpace(videoDTO.Title))
 	videoDTO.Description = strings.TrimSpace(videoDTO.Description)
 	if err := videoDTO.Validate(); err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
-	if _, err := s.r.AddVideo(videoDTO); err != nil {
-		return err
+	id, err := s.r.AddVideo(videoDTO)
+	if err != nil {
+		return uuid.UUID{}, err
 	}
-	return nil
+	return id, nil
 }
 
 func (s service) GetVideos(limit int) (models.VideoSlice, error) {

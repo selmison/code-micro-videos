@@ -1,9 +1,10 @@
 //+build integration
 
-package files
+package memory
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/google/uuid"
@@ -23,7 +24,12 @@ func NewRepository() *repository {
 }
 
 func (r *repository) Exists(videoID uuid.UUID, fileName string) (bool, error) {
-	filePath := fmt.Sprintf("%s%c%s", videoID, os.PathSeparator, fileName)
+	var filePath string
+	if videoID == (uuid.UUID{}) {
+		filePath = fileName
+	} else {
+		filePath = fmt.Sprintf("%s%c%s", videoID, os.PathSeparator, fileName)
+	}
 	exists, err := r.Afs.Exists(filePath)
 	if err != nil {
 		return false, fmt.Errorf("could not verify if file exists: %v", err)
@@ -36,15 +42,17 @@ func (r *repository) GetFileFromVideo(videoID uuid.UUID, fileName string) ([]byt
 	return r.Afs.ReadFile(filePath)
 }
 
-func (r *repository) SaveFileToVideo(videoID uuid.UUID, fileName string, fileData []byte) error {
+func (r *repository) SaveFileToVideo(videoID uuid.UUID, fileName string, fileData io.Reader) error {
 	filePath := fmt.Sprintf("%s%c%s", videoID, os.PathSeparator, fileName)
-	if err := r.Afs.WriteFile(filePath, fileData, 0644); err != nil {
-		return err
+	if fileData != nil {
+		if err := r.Afs.WriteReader(filePath, fileData); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (r *repository) UpdateFileToVideo(videoID uuid.UUID, fileName string, fileData []byte) (bool, error) {
+func (r *repository) UpdateFileToVideo(videoID uuid.UUID, fileName string, fileData io.Reader) (bool, error) {
 	exists, err := r.Exists(videoID, fileName)
 	if err != nil {
 		return false, err

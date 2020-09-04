@@ -12,6 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/golang/mock v1.4.3
 	github.com/google/uuid v1.1.1
+	github.com/gorilla/schema v1.2.0
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351

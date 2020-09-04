@@ -11,6 +11,8 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/selmison/code-micro-videos/pkg/storage/files/memory"
 )
 
 var (
@@ -64,6 +66,7 @@ func GetConfig() (*Config, error) {
 					dbPass,
 					dbSSLMode,
 					dbConnStr,
+					memory.NewRepository(),
 				}
 			})
 	}

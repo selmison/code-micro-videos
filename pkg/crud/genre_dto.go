@@ -13,8 +13,8 @@ import (
 var genreValidate *validator.Validate
 
 type GenreDTO struct {
-	Name       string        `json:"name" validate:"not_blank"`
-	Categories []CategoryDTO `json:"categories"`
+	Name       string        `json:"name" schema:"name" validate:"not_blank"`
+	Categories []CategoryDTO `json:"categories" schema:"categories"`
 }
 
 func MapGenreToDTO(genre models.Genre) (*GenreDTO, error) {

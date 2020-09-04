@@ -3,11 +3,11 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/schema"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/selmison/code-micro-videos/models"
@@ -15,22 +15,31 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
+const (
+	MaxMemory      = 10 << 20
+	VideoFileField = "video_file"
+)
+
+var decoder = schema.NewDecoder()
+
 func (s *server) handleVideoCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(MaxMemory); err != nil {
+			s.errInternalServer(w, err)
+			return
+		}
 		videoDTO := &crud.VideoDTO{}
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
+		if err := decoder.Decode(videoDTO, r.PostForm); err != nil {
 			s.errInternalServer(w, err)
 		}
 		if err := r.Body.Close(); err != nil {
 			s.errInternalServer(w, err)
 		}
-		if err := json.Unmarshal(body, &videoDTO); err != nil {
-			s.errUnprocessableEntity(w, err)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				s.errInternalServer(w, err)
-			}
+		_, videoFileHandler, err := r.FormFile(VideoFileField)
+		if err != nil {
+			s.errInternalServer(w, err)
 		}
+		videoDTO.VideoFileHandler = videoFileHandler
 		if _, err := s.svc.AddVideo(*videoDTO); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
@@ -49,7 +58,7 @@ func (s *server) handleVideoCreate() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(http.StatusText(http.StatusCreated)); err != nil {
+		if _, err := w.Write([]byte(http.StatusText(http.StatusCreated))); err != nil {
 			s.errInternalServer(w, err)
 		}
 	}

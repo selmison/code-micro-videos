@@ -61,7 +61,7 @@ func setupTestCase(fakes interface{}) (*config.Config, func(t *testing.T), *Repo
 		return nil, nil, nil, fmt.Errorf("test: failed to open DB: %v", err)
 	}
 	ctx := context.Background()
-	r := NewRepository(ctx, db)
+	r := NewRepository(ctx, db, cfg.RepoFiles)
 	switch v := fakes.(type) {
 	case []models.Category:
 		for _, category := range v {

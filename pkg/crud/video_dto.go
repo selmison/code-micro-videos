@@ -2,6 +2,7 @@ package crud
 
 import (
 	"fmt"
+	"mime/multipart"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/non-standard/validators"
@@ -36,15 +37,15 @@ func (v *VideoRating) Validate() error {
 }
 
 type VideoDTO struct {
-	Title        string        `json:"title" validate:"not_blank"`
-	Description  string        `json:"description"`
-	YearLaunched *int16        `json:"year_launched" validate:"required"`
-	Opened       bool          `json:"opened"`
-	Rating       *VideoRating  `json:"rating" validate:"required"`
-	Duration     *int16        `json:"duration" validate:"required"`
-	VideoFile    []byte        `json:"video_file"`
-	Categories   []CategoryDTO `json:"categories" validate:"not_blank"`
-	Genres       []GenreDTO    `json:"genres" validate:"not_blank"`
+	Title            string                `json:"title" schema:"title" validate:"not_blank"`
+	Description      string                `json:"description" schema:"description"`
+	YearLaunched     *int16                `json:"year_launched" schema:"year_launched" validate:"required"`
+	Opened           bool                  `json:"opened" schema:"opened"`
+	Rating           *VideoRating          `json:"rating" schema:"rating" validate:"required"`
+	Duration         *int16                `json:"duration" schema:"duration" validate:"required"`
+	Categories       []CategoryDTO         `json:"categories" schema:"categories" validate:"not_blank"`
+	Genres           []GenreDTO            `json:"genres" schema:"genres" validate:"not_blank"`
+	VideoFileHandler *multipart.FileHeader `json:"-" schema:"-"`
 }
 
 func MapVideoToDTO(video models.Video) (*VideoDTO, error) {

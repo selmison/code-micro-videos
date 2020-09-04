@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -121,7 +120,6 @@ func (s *server) handleCategoryUpdate() http.HandlerFunc {
 		params := httprouter.ParamsFromContext(r.Context())
 		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
 			err = s.svc.UpdateCategory(categoryName, *categoryDTO)
-			fmt.Println(err)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)

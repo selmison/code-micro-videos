@@ -6,6 +6,7 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	models "github.com/selmison/code-micro-videos/models"
 	crud "github.com/selmison/code-micro-videos/pkg/crud"
 	reflect "reflect"
@@ -77,11 +78,12 @@ func (mr *MockRepositoryMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 }
 
 // AddVideo mocks base method
-func (m *MockRepository) AddVideo(arg0 crud.VideoDTO) error {
+func (m *MockRepository) AddVideo(arg0 crud.VideoDTO) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddVideo", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddVideo indicates an expected call of AddVideo
@@ -309,11 +311,12 @@ func (mr *MockRepositoryMockRecorder) UpdateGenre(arg0, arg1 interface{}) *gomoc
 }
 
 // UpdateVideo mocks base method
-func (m *MockRepository) UpdateVideo(arg0 string, arg1 crud.VideoDTO) error {
+func (m *MockRepository) UpdateVideo(arg0 string, arg1 crud.VideoDTO) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateVideo", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateVideo indicates an expected call of UpdateVideo
@@ -388,11 +391,12 @@ func (mr *MockServiceMockRecorder) AddGenre(arg0 interface{}) *gomock.Call {
 }
 
 // AddVideo mocks base method
-func (m *MockService) AddVideo(arg0 crud.VideoDTO) error {
+func (m *MockService) AddVideo(arg0 crud.VideoDTO) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddVideo", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddVideo indicates an expected call of AddVideo
@@ -620,11 +624,12 @@ func (mr *MockServiceMockRecorder) UpdateGenre(arg0, arg1 interface{}) *gomock.C
 }
 
 // UpdateVideo mocks base method
-func (m *MockService) UpdateVideo(arg0 string, arg1 crud.VideoDTO) error {
+func (m *MockService) UpdateVideo(arg0 string, arg1 crud.VideoDTO) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateVideo", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateVideo indicates an expected call of UpdateVideo

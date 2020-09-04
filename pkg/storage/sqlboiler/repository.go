@@ -18,7 +18,7 @@ type Repository struct {
 	repoFiles files.Repository
 }
 
-func NewRepository(ctx context.Context, db *sql.DB) *Repository {
+func NewRepository(ctx context.Context, db *sql.DB, repoFiles files.Repository) *Repository {
 	boil.SetDB(db)
 
 	models.AddCategoryHook(boil.BeforeInsertHook, isValidUUIDCategoryHook)
@@ -37,7 +37,6 @@ func NewRepository(ctx context.Context, db *sql.DB) *Repository {
 	models.AddVideoHook(boil.BeforeUpdateHook, isValidUUIDVideoHook)
 	models.AddVideoHook(boil.BeforeUpsertHook, isValidUUIDVideoHook)
 
-	repoFiles := files.NewRepository()
 	return &Repository{ctx, repoFiles}
 }
 

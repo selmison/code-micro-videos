@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -44,8 +46,23 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID
 	video.Opened = null.Bool{Bool: videoDTO.Opened, Valid: true}
 	video.Rating = int16(*videoDTO.Rating)
 	video.Duration = *videoDTO.Duration
-	fileName := fmt.Sprintf("%x", sha256.Sum256(videoDTO.VideoFile))
-	video.VideoFile = null.String{String: fileName, Valid: true}
+	var videoFile multipart.File
+	fileName := null.String{}
+	if videoDTO.VideoFileHandler == nil {
+		//TODO remove current video
+	} else if videoDTO.VideoFileHandler.Size > 0 {
+		hash := sha256.New()
+		var err error
+		if videoFile, err = videoDTO.VideoFileHandler.Open(); err != nil {
+			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
+		}
+		if _, err := io.Copy(hash, videoFile); err != nil {
+			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
+		}
+		hashName := fmt.Sprintf("%x", hash.Sum(nil))
+		fileName = null.String{String: hashName, Valid: true}
+	}
+	video.VideoFile = fileName
 	_, err = video.Update(r.ctx, tx, boil.Infer())
 	if err != nil {
 		if err := tx.Rollback(); err != nil {
@@ -57,7 +74,7 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("could not parse video.ID: %v", err)
 	}
-	if _, err := r.repoFiles.UpdateFileToVideo(videoID, fileName, videoDTO.VideoFile); err != nil {
+	if _, err := r.repoFiles.UpdateFileToVideo(videoID, fileName.String, videoFile); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return uuid.UUID{}, err
 		}
@@ -71,7 +88,20 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID
 
 func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
 	id := uuid.New()
-	fileName := fmt.Sprintf("%x", sha256.Sum256(videoDTO.VideoFile))
+	var videoFile multipart.File
+	fileName := null.String{}
+	if videoDTO.VideoFileHandler != nil && videoDTO.VideoFileHandler.Size > 0 {
+		hash := sha256.New()
+		var err error
+		if videoFile, err = videoDTO.VideoFileHandler.Open(); err != nil {
+			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
+		}
+		if _, err := io.Copy(hash, videoFile); err != nil {
+			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
+		}
+		hashName := fmt.Sprintf("%x", hash.Sum(nil))
+		fileName = null.String{String: hashName, Valid: true}
+	}
 	video := models.Video{
 		ID:           id.String(),
 		Title:        videoDTO.Title,
@@ -80,7 +110,7 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
 		Opened:       null.Bool{Bool: videoDTO.Opened, Valid: true},
 		Rating:       int16(*videoDTO.Rating),
 		Duration:     *videoDTO.Duration,
-		VideoFile:    null.String{String: fileName, Valid: true},
+		VideoFile:    fileName,
 	}
 	tx, err := boil.BeginTx(r.ctx, nil)
 	if err != nil {
@@ -112,8 +142,8 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
 		}
 		return uuid.UUID{}, err
 	}
-	if videoDTO.VideoFile != nil {
-		if err := r.repoFiles.SaveFileToVideo(id, fileName, videoDTO.VideoFile); err != nil {
+	if videoDTO.VideoFileHandler != nil && videoDTO.VideoFileHandler.Size > 0 {
+		if err := r.repoFiles.SaveFileToVideo(id, fileName.String, videoFile); err != nil {
 			if err := tx.Rollback(); err != nil {
 				return uuid.UUID{}, err
 			}

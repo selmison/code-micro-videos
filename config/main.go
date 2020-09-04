@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/testcontainers/testcontainers-go"
+
+	"github.com/selmison/code-micro-videos/pkg/storage/files"
 )
 
 const (
@@ -37,6 +39,7 @@ type Config struct {
 	DBPass        string
 	DBSSLMode     string
 	DBConnStr     string
+	RepoFiles     files.Repository
 }
 
 func init() {
