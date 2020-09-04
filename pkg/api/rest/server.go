@@ -24,12 +24,8 @@ type server struct {
 	logger *zap.SugaredLogger
 }
 
-func InitApp(ctx context.Context, dbConnStr string) error {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return fmt.Errorf("test: failed to get config: %v\n", err)
-	}
-	db, err := sql.Open(cfg.DBDrive, dbConnStr)
+func InitApp(ctx context.Context, cfg *config.Config) error {
+	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
 		return err
 	}
@@ -45,6 +41,7 @@ func InitApp(ctx context.Context, dbConnStr string) error {
 
 func initHttpServer(address string, crud crud.Service) error {
 	s := newServer(crud)
+	fmt.Printf("The server is on tap now: http://%s\n", address)
 	if err := http.ListenAndServe(address, s); err != nil {
 		return err
 	}

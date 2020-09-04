@@ -15,7 +15,12 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	if err := rest.InitApp(context.Background(), cfg.DBConnStr); err != nil {
+	defer func() {
+		if err := cfg.TerminateContainer(); err != nil {
+			log.Println(err)
+		}
+	}()
+	if err := rest.InitApp(context.Background(), &cfg); err != nil {
 		log.Fatalln(err)
 	}
 }

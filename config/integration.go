@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
@@ -15,65 +14,46 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/storage/files/memory"
 )
 
-var (
-	once           sync.Once
-	singleInstance *Config
-)
-
-func GetConfig() (*Config, error) {
-	var e error
-	if singleInstance == nil {
-		once.Do(
-			func() {
-				ctx := context.Background()
-				dbContainer, err := InitDBContainer(ctx)
-				if err != nil {
-					e = err
-					return
-				}
-				host, err := (*dbContainer).Host(ctx)
-				if err != nil {
-					e = fmt.Errorf("access dbContainer: %s\n", err)
-					return
-				}
-				port, err := nat.NewPort("tcp", strconv.Itoa(dbPort))
-				if err != nil {
-					e = err
-					return
-				}
-				mappedPort, err := (*dbContainer).MappedPort(ctx, port)
-				if err != nil {
-					e = fmt.Errorf("access dbContainer: %s\n", err)
-					return
-				}
-				dbConnStr := fmt.Sprintf(
-					"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
-					host,
-					mappedPort.Int(),
-					dbName,
-					dbUser,
-					dbPass,
-					dbSSLMode,
-				)
-				singleInstance = &Config{
-					ctx,
-					dbContainer,
-					addressServer,
-					dbDrive,
-					dbName,
-					dbPort,
-					dbUser,
-					dbPass,
-					dbSSLMode,
-					dbConnStr,
-					memory.NewRepository(),
-				}
-			})
+func GetConfig() (Config, error) {
+	ctx := context.Background()
+	dbContainer, err := InitDBContainer(ctx)
+	if err != nil {
+		return Config{}, err
 	}
-	if e != nil {
-		return nil, e
+	host, err := (*dbContainer).Host(ctx)
+	if err != nil {
+		return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
 	}
-	return singleInstance, nil
+	port, err := nat.NewPort("tcp", strconv.Itoa(dbPort))
+	if err != nil {
+		return Config{}, err
+	}
+	mappedPort, err := (*dbContainer).MappedPort(ctx, port)
+	if err != nil {
+		return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
+	}
+	dbConnStr := fmt.Sprintf(
+		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
+		host,
+		mappedPort.Int(),
+		dbName,
+		dbUser,
+		dbPass,
+		dbSSLMode,
+	)
+	return Config{
+		ctx,
+		dbContainer,
+		addressServer,
+		dbDrive,
+		dbName,
+		dbPort,
+		dbUser,
+		dbPass,
+		dbSSLMode,
+		dbConnStr,
+		memory.NewRepository(),
+	}, nil
 }
 
 func InitDBContainer(ctx context.Context) (*testcontainers.Container, error) {

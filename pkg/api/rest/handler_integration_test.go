@@ -22,6 +22,8 @@ import (
 	"github.com/selmison/code-micro-videos/testdata/seeds"
 )
 
+var cfg config.Config
+
 func TestMain(m *testing.M) {
 	os.Exit(testMain(m))
 }
@@ -32,7 +34,6 @@ func testMain(m *testing.M) int {
 		return 1
 	}
 	defer teardownTestCase(m)
-	cfg, err := config.GetConfig()
 	if err != nil {
 		return 1
 	}
@@ -42,7 +43,7 @@ func testMain(m *testing.M) int {
 	}
 	var code int
 	go func() {
-		if err := rest.InitApp(context.Background(), cfg.DBConnStr); err != nil {
+		if err := rest.InitApp(context.Background(), &cfg); err != nil {
 			code = 1
 			log.Fatalln(err, "init app")
 		}
@@ -56,22 +57,19 @@ func testMain(m *testing.M) int {
 }
 
 func setupTestMain() (func(m *testing.M), error) {
-	cfg, err := config.GetConfig()
+	var err error
+	cfg, err = config.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("test: failed to get config: %v", err)
 	}
 	return func(m *testing.M) {
-		if err := testdata.ClearTables(cfg.DBDrive, cfg.DBConnStr); err != nil {
-			log.Printf("test: clear categories table: %v/n", err)
+		if err := cfg.TerminateContainer(); err != nil {
+			log.Printf("test: terminate container: %v\n", err)
 		}
 	}, nil
 }
 
 func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), error) {
-	cfg, err := config.GetConfig()
-	if err != nil {
-		return nil, nil, fmt.Errorf("test: failed to get config: %v", err)
-	}
 	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("test: failed to open DB: %v", err)
@@ -127,7 +125,7 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 		}
 	}
 
-	return cfg, func(t *testing.T) {
+	return &cfg, func(t *testing.T) {
 		if err := testdata.ClearTables(cfg.DBDrive, cfg.DBConnStr); err != nil {
 			t.Errorf("test: clear categories table: %v", err)
 		}
