@@ -1,6 +1,6 @@
 module github.com/selmison/code-micro-videos
 
-go 1.15
+go 1.14
 
 require (
 	github.com/Pallinder/go-randomdata v1.2.0
@@ -23,6 +23,7 @@ require (
 	github.com/volatiletech/sqlboiler/v4 v4.2.0
 	github.com/volatiletech/strmangle v0.0.1
 	go.uber.org/zap v1.13.0
+	golang.org/dl v0.0.0-20200901180525-35ca1c5c19fb // indirect
 	golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/genproto v0.0.0-20191108220845-16a3f7862a1a // indirect
