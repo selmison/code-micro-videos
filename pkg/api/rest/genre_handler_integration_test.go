@@ -18,6 +18,8 @@ import (
 	"github.com/selmison/code-micro-videos/testdata"
 )
 
+const fakeCategoryIndex = 0
+
 func Test_integration_GenreCreate(t *testing.T) {
 	cfg, teardownTestCase, err := setupTestCase(t, nil)
 	if err != nil {
@@ -82,7 +84,13 @@ func Test_integration_GenreCreate(t *testing.T) {
 }
 
 func Test_RestApi_Post_Genres(t *testing.T) {
-	cfg, teardownTestCase, err := setupTestCase(t, nil)
+	cfg, teardownTestCase, err := setupTestCase(
+		t,
+		testdata.FakeCategories,
+		testdata.FakeGenres,
+		testdata.FakeVideos,
+	)
+	fakeExistCategory := testdata.FakeCategories[fakeCategoryIndex]
 	if err != nil {
 		t.Errorf("test: failed to setup test case: %v\n", err)
 		return
@@ -110,16 +118,47 @@ func Test_RestApi_Post_Genres(t *testing.T) {
 				fakeUrl,
 				"application/json; charset=UTF-8",
 				strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
+					`{"name": "%s", "categories": [{ "id": "%s"}]}`,
 					"",
-					faker.URL(),
-					faker.Phonenumber(),
-					faker.Sentence(),
+					fakeExistCategory.ID,
 				)),
 			},
 			want: response{
 				status: http.StatusBadRequest,
 				body:   http.StatusText(http.StatusBadRequest),
+			},
+			wantErr: false,
+		},
+		{
+			name: "When name is filled and categories is empty",
+			req: request{
+				fakeUrl,
+				"application/json; charset=UTF-8",
+				strings.NewReader(fmt.Sprintf(
+					`{"name": "%s", "categories": []}`,
+					faker.FirstName(),
+				)),
+			},
+			want: response{
+				status: http.StatusCreated,
+				body:   fmt.Sprintf("\"%s\"", http.StatusText(http.StatusCreated)),
+			},
+			wantErr: false,
+		},
+		{
+			name: "When name and categories are filled",
+			req: request{
+				fakeUrl,
+				"application/json; charset=UTF-8",
+				strings.NewReader(fmt.Sprintf(
+					`{"name": "%s", "categories": [{ "id": "%s"}]}`,
+					faker.FirstName(),
+					fakeExistCategory.ID,
+				)),
+			},
+			want: response{
+				status: http.StatusCreated,
+				body:   fmt.Sprintf("\"%s\"", http.StatusText(http.StatusCreated)),
 			},
 			wantErr: false,
 		},

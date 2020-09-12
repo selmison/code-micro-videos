@@ -21,13 +21,13 @@ type Repository struct {
 func NewRepository(ctx context.Context, db *sql.DB, repoFiles files.Repository) *Repository {
 	boil.SetDB(db)
 
-	models.AddCategoryHook(boil.BeforeInsertHook, isValidUUIDCategoryHook)
-	models.AddCategoryHook(boil.BeforeUpdateHook, isValidUUIDCategoryHook)
-	models.AddCategoryHook(boil.BeforeUpsertHook, isValidUUIDCategoryHook)
+	models.CreateCategoryHook(boil.BeforeInsertHook, isValidUUIDCategoryHook)
+	models.CreateCategoryHook(boil.BeforeUpdateHook, isValidUUIDCategoryHook)
+	models.CreateCategoryHook(boil.BeforeUpsertHook, isValidUUIDCategoryHook)
 
-	models.AddGenreHook(boil.BeforeInsertHook, isValidUUIDGenreHook)
-	models.AddGenreHook(boil.BeforeUpdateHook, isValidUUIDGenreHook)
-	models.AddGenreHook(boil.BeforeUpsertHook, isValidUUIDGenreHook)
+	models.CreateGenreHook(boil.BeforeInsertHook, isValidUUIDGenreHook)
+	models.CreateGenreHook(boil.BeforeUpdateHook, isValidUUIDGenreHook)
+	models.CreateGenreHook(boil.BeforeUpsertHook, isValidUUIDGenreHook)
 
 	models.AddCastMemberHook(boil.BeforeInsertHook, isValidUUIDCastMemberHook)
 	models.AddCastMemberHook(boil.BeforeUpdateHook, isValidUUIDCastMemberHook)
@@ -42,27 +42,27 @@ func NewRepository(ctx context.Context, db *sql.DB, repoFiles files.Repository) 
 
 func isValidUUIDCategoryHook(_ context.Context, _ boil.ContextExecutor, c *models.Category) error {
 	if !isValidUUID(c.ID) {
-		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
+		return fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated)
 	}
 	return nil
 }
 
 func isValidUUIDGenreHook(_ context.Context, _ boil.ContextExecutor, g *models.Genre) error {
 	if !isValidUUID(g.ID) {
-		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
+		return fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated)
 	}
 	return nil
 }
 
 func isValidUUIDCastMemberHook(_ context.Context, _ boil.ContextExecutor, c *models.CastMember) error {
 	if !isValidUUID(c.ID) {
-		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
+		return fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated)
 	}
 	return nil
 }
 func isValidUUIDVideoHook(_ context.Context, _ boil.ContextExecutor, v *models.Video) error {
 	if !isValidUUID(v.ID) {
-		return fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated)
+		return fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated)
 	}
 	return nil
 }

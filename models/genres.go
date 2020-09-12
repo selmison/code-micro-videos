@@ -278,8 +278,8 @@ func (o *Genre) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecuto
 	return nil
 }
 
-// AddGenreHook registers your hook function for all future operations.
-func AddGenreHook(hookPoint boil.HookPoint, genreHook GenreHook) {
+// CreateGenreHook registers your hook function for all future operations.
+func CreateGenreHook(hookPoint boil.HookPoint, genreHook GenreHook) {
 	switch hookPoint {
 	case boil.BeforeInsertHook:
 		genreBeforeInsertHooks = append(genreBeforeInsertHooks, genreHook)

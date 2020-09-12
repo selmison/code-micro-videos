@@ -15,11 +15,11 @@ import (
 	. "github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID, error) {
+func (r Repository) UpdateVideo(title string, videoDTO service.VideoDTO) (uuid.UUID, error) {
 	video, err := r.FetchVideo(title)
 	if err != nil {
 		return uuid.UUID{}, err
@@ -86,7 +86,7 @@ func (r Repository) UpdateVideo(title string, videoDTO crud.VideoDTO) (uuid.UUID
 	return videoID, nil
 }
 
-func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
+func (r Repository) AddVideo(videoDTO service.VideoDTO) (uuid.UUID, error) {
 	id := uuid.New()
 	var videoFile multipart.File
 	fileName := null.String{}
@@ -156,7 +156,7 @@ func (r Repository) AddVideo(videoDTO crud.VideoDTO) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (r Repository) setCategoriesInVideo(categories []crud.CategoryDTO, video models.Video, tx *sql.Tx) error {
+func (r Repository) setCategoriesInVideo(categories []service.Category, video models.Video, tx *sql.Tx) error {
 	if categories == nil || len(categories) == 0 {
 		return fmt.Errorf("none category is %w", logger.ErrNotFound)
 	}
@@ -183,7 +183,7 @@ func (r Repository) setCategoriesInVideo(categories []crud.CategoryDTO, video mo
 	return nil
 }
 
-func (r Repository) setGenresInVideo(genres []crud.GenreDTO, video models.Video, tx *sql.Tx) error {
+func (r Repository) setGenresInVideo(genres []service.Genre, video models.Video, tx *sql.Tx) error {
 	if genres == nil || len(genres) == 0 {
 		return fmt.Errorf("none genre is %w", logger.ErrNotFound)
 	}

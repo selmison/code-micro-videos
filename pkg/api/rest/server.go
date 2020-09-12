@@ -10,18 +10,17 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"github.com/selmison/code-micro-videos/config"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/common/domain"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
 )
 
 type server struct {
 	router *httprouter.Router
-	svc    crud.Service
-	logger *zap.SugaredLogger
+	svc    service.Service
+	logger domain.Logger
 }
 
 func InitApp(ctx context.Context, cfg *config.Config) error {
@@ -35,11 +34,11 @@ func InitApp(ctx context.Context, cfg *config.Config) error {
 		}
 	}()
 	r := sqlboiler.NewRepository(ctx, db, cfg.RepoFiles)
-	svc := crud.NewService(r)
+	svc := service.NewService(r)
 	return initHttpServer(cfg.AddressServer, svc)
 }
 
-func initHttpServer(address string, crud crud.Service) error {
+func initHttpServer(address string, crud service.Service) error {
 	s := newServer(crud)
 	fmt.Printf("The server is on tap now: http://%s\n", address)
 	if err := http.ListenAndServe(address, s); err != nil {
@@ -48,28 +47,14 @@ func initHttpServer(address string, crud crud.Service) error {
 	return nil
 }
 
-func initLogger() *zap.SugaredLogger {
-	devConfig := zap.NewDevelopmentConfig()
-	devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	zapLogger, err := devConfig.Build()
-	if err != nil {
-		log.Fatalf("can't initialize zap logger: %v", err)
-	}
-	sugar := zapLogger.Sugar()
-	defer func() {
-		_ = sugar.Sync()
-	}()
-	return sugar
-}
-
-func newServer(svc crud.Service) *server {
+func newServer(svc service.Service) *server {
 	r := httprouter.New()
 	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		if _, err := fmt.Fprint(w, "Welcome!\n"); err != nil {
 			log.Println(err)
 		}
 	})
-	s := &server{router: r, svc: svc, logger: initLogger()}
+	s := &server{router: r, svc: svc, logger: domain.NewLogger("debug")}
 	s.routes()
 	return s
 }

@@ -47,11 +47,8 @@ func Test_RestApi_Post_Categories(t *testing.T) {
 				fakeUrl,
 				"application/json; charset=UTF-8",
 				strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
+					`{"name": "%s" }`,
 					"",
-					faker.URL(),
-					faker.Phonenumber(),
-					faker.Sentence(),
 				)),
 			},
 			want: response{
@@ -353,10 +350,8 @@ func Test_RestApi_Update_Category(t *testing.T) {
 				url:         fakeUrl(fakeExistName),
 				contentType: "application/json; charset=UTF-8",
 				body: strings.NewReader(fmt.Sprintf(
-					`{"name": "%s", "avatar": "%s", "whatsapp": "%s", "bio": "%s" }`,
+					`{"name": "%s", "description": "%s"}`,
 					faker.Name(),
-					faker.URL(),
-					faker.Phonenumber(),
 					faker.Sentence(),
 				)),
 			},

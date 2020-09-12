@@ -19,7 +19,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/testdata"
 )
@@ -27,7 +27,7 @@ import (
 var (
 	fakeYearLaunched = new(int16)
 	fakeDuration     = new(int16)
-	fakeRating       = new(crud.VideoRating)
+	fakeRating       = new(service.VideoRating)
 )
 
 func TestRepository_AddVideo(t *testing.T) {
@@ -39,28 +39,27 @@ func TestRepository_AddVideo(t *testing.T) {
 	defer teardownTestCase(t)
 	const (
 		fakeDoesNotExistTitle = "fakeDoesNotExistTitle"
-		fakeDesc              = "fakeDesc"
 		fakeOpened            = false
 		fakeCategoryIndex     = 0
 		fakeGenreIndex        = 0
 	)
 	*fakeYearLaunched = 2020
 	*fakeDuration = 90
-	*fakeRating = crud.TwelveRating
+	*fakeRating = service.TwelveRating
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
-	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
+	fakeDoesNotExistCategoryDTO := service.Category{Name: faker.FirstName(), Description: &fakeDesc}
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-	fakeDoesNotExistGenreDTO := crud.GenreDTO{Name: faker.FirstName()}
-	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+	fakeDoesNotExistGenreDTO := service.Genre{Name: faker.FirstName()}
+	if err := repository.CreateCategory(fakeCtx, fakeExistCategoryDTO); err != nil {
 		t.Errorf("test: insert category: %s", err)
 		return
 	}
-	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+	if err := repository.CreateGenre(fakeCtx, fakeExistGenreDTO); err != nil {
 		t.Errorf("test: insert genre: %s", err)
 		return
 	}
 	type args struct {
-		videoDTO crud.VideoDTO
+		videoDTO service.VideoDTO
 	}
 	type returns struct {
 		err error
@@ -74,15 +73,15 @@ func TestRepository_AddVideo(t *testing.T) {
 		{
 			name: "When VideoFileHandler in VideoDTO is omitted",
 			args: args{
-				crud.VideoDTO{
+				service.VideoDTO{
 					Title:        fakeDoesNotExistTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
-					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
-					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+					Genres:       []service.Genre{fakeDoesNotExistGenreDTO},
+					Categories:   []service.Category{fakeDoesNotExistCategoryDTO},
 				},
 			},
 			want:    returns{logger.ErrNotFound},
@@ -91,15 +90,15 @@ func TestRepository_AddVideo(t *testing.T) {
 		{
 			name: "When VideoDTO is with wrong categories and genres",
 			args: args{
-				crud.VideoDTO{
+				service.VideoDTO{
 					Title:        fakeDoesNotExistTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
-					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
-					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+					Genres:       []service.Genre{fakeDoesNotExistGenreDTO},
+					Categories:   []service.Category{fakeDoesNotExistCategoryDTO},
 				},
 			},
 			want:    returns{logger.ErrNotFound},
@@ -107,15 +106,15 @@ func TestRepository_AddVideo(t *testing.T) {
 		},
 		{
 			name: "When VideoDTO is right",
-			args: args{crud.VideoDTO{
+			args: args{service.VideoDTO{
 				Title:        fakeDoesNotExistTitle,
 				Description:  fakeDesc,
 				YearLaunched: fakeYearLaunched,
 				Opened:       fakeOpened,
 				Rating:       fakeRating,
 				Duration:     fakeDuration,
-				Genres:       []crud.GenreDTO{fakeExistGenreDTO},
-				Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+				Genres:       []service.Genre{fakeExistGenreDTO},
+				Categories:   []service.Category{fakeExistCategoryDTO},
 			}},
 			want:    returns{nil},
 			wantErr: false,
@@ -325,34 +324,33 @@ func TestRepository_UpdateVideo(t *testing.T) {
 	const (
 		fakeDoesNotExistTitle     = "fakeDoesNotExistTitle"
 		fakeExistGenreName        = "fakeExistGenreName"
-		fakeDesc                  = "fakeDesc"
 		fakeExistCategoryName     = "fakeExistCategoryName"
 		fakeOpened                = false
 		fakeNewDoestNotExistTitle = "fakeNewDoestNotExistTitle"
 	)
 	*fakeYearLaunched = 2020
 	*fakeDuration = 90
-	*fakeRating = crud.TwelveRating
-	fakeDoesNotExistCategoryDTO := crud.CategoryDTO{Name: faker.FirstName(), Description: faker.Sentence()}
-	fakeDoesNotExistGenreDTO := crud.GenreDTO{Name: faker.FirstName()}
-	fakeExistCategoryDTO := crud.CategoryDTO{Name: fakeExistCategoryName}
-	fakeExistGenreDTO := crud.GenreDTO{Name: fakeExistGenreName}
+	*fakeRating = service.TwelveRating
+	fakeDoesNotExistCategoryDTO := service.Category{Name: faker.FirstName(), Description: &fakeDesc}
+	fakeDoesNotExistGenreDTO := service.Genre{Name: faker.FirstName()}
+	fakeExistCategoryDTO := service.Category{Name: fakeExistCategoryName}
+	fakeExistGenreDTO := service.Genre{Name: fakeExistGenreName}
 	fakeExistTitle := strings.ToLower(testdata.FakeVideos[0].Title)
-	fakeExistVideoDTO := crud.VideoDTO{
+	fakeExistVideoDTO := service.VideoDTO{
 		Title:        fakeExistTitle,
 		Description:  fakeDesc,
 		YearLaunched: fakeYearLaunched,
 		Opened:       fakeOpened,
 		Rating:       fakeRating,
 		Duration:     fakeDuration,
-		Genres:       []crud.GenreDTO{fakeExistGenreDTO},
-		Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+		Genres:       []service.Genre{fakeExistGenreDTO},
+		Categories:   []service.Category{fakeExistCategoryDTO},
 	}
-	if err := repository.AddCategory(fakeExistCategoryDTO); err != nil {
+	if err := repository.CreateCategory(fakeCtx, fakeExistCategoryDTO); err != nil {
 		t.Errorf("test: insert category: %s", err)
 		return
 	}
-	if err := repository.AddGenre(fakeExistGenreDTO); err != nil {
+	if err := repository.CreateGenre(fakeCtx, fakeExistGenreDTO); err != nil {
 		t.Errorf("test: insert genre: %s", err)
 		return
 	}
@@ -365,7 +363,7 @@ func TestRepository_UpdateVideo(t *testing.T) {
 	}
 	type args struct {
 		title    string
-		videoDTO crud.VideoDTO
+		videoDTO service.VideoDTO
 	}
 	tests := []struct {
 		name    string
@@ -378,7 +376,7 @@ func TestRepository_UpdateVideo(t *testing.T) {
 			name: "When title to update doesn't exist",
 			args: args{
 				fakeDoesNotExistTitle,
-				crud.VideoDTO{
+				service.VideoDTO{
 					Title: fakeNewDoestNotExistTitle,
 				},
 			},
@@ -389,15 +387,15 @@ func TestRepository_UpdateVideo(t *testing.T) {
 			name: "When VideoDTO is with wrong genres",
 			args: args{
 				fakeExistTitle,
-				crud.VideoDTO{
+				service.VideoDTO{
 					Title:        fakeDoesNotExistTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
-					Genres:       []crud.GenreDTO{fakeDoesNotExistGenreDTO},
-					Categories:   []crud.CategoryDTO{fakeDoesNotExistCategoryDTO},
+					Genres:       []service.Genre{fakeDoesNotExistGenreDTO},
+					Categories:   []service.Category{fakeDoesNotExistCategoryDTO},
 				},
 			},
 			want:    fmt.Errorf("none category is %w", logger.ErrNotFound),
@@ -407,15 +405,15 @@ func TestRepository_UpdateVideo(t *testing.T) {
 			name: "When everything is right",
 			args: args{
 				fakeExistTitle,
-				crud.VideoDTO{
+				service.VideoDTO{
 					Title:        fakeDoesNotExistTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
 					Rating:       fakeRating,
 					Duration:     fakeDuration,
-					Genres:       []crud.GenreDTO{fakeExistGenreDTO},
-					Categories:   []crud.CategoryDTO{fakeExistCategoryDTO},
+					Genres:       []service.Genre{fakeExistGenreDTO},
+					Categories:   []service.Category{fakeExistCategoryDTO},
 				},
 			},
 			want:    nil,
@@ -453,18 +451,18 @@ func TestVideo_isValidUUIDHook(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When UUID is not validated",
+			name: "When ID is not validated",
 			args: args{
 				models.Video{
 					ID:    "fakeUUIDIsNotValidated",
 					Title: faker.Name(),
 				},
 			},
-			want:    fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated),
+			want:    fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated),
 			wantErr: true,
 		},
 		{
-			name: "When UUID is validated",
+			name: "When ID is validated",
 			args: args{
 				models.Video{
 					ID:           uuid.New().String(),
@@ -472,7 +470,7 @@ func TestVideo_isValidUUIDHook(t *testing.T) {
 					Description:  faker.Sentence(),
 					YearLaunched: 2020,
 					Opened:       null.Bool{Bool: true, Valid: true},
-					Rating:       int16(crud.TwelveRating),
+					Rating:       int16(service.TwelveRating),
 					Duration:     150,
 				},
 			},

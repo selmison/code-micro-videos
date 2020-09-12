@@ -11,7 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
@@ -28,7 +28,7 @@ func (s *server) handleVideoCreate() http.HandlerFunc {
 			s.errInternalServer(w, err)
 			return
 		}
-		videoDTO := &crud.VideoDTO{}
+		videoDTO := &service.VideoDTO{}
 		if err := decoder.Decode(videoDTO, r.PostForm); err != nil {
 			s.errInternalServer(w, err)
 		}
@@ -73,9 +73,9 @@ func (s *server) handleVideosGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		videosDTO := make([]*crud.VideoDTO, len(videos))
+		videosDTO := make([]*service.VideoDTO, len(videos))
 		for i, video := range videos {
-			dto, err := crud.MapVideoToDTO(*video)
+			dto, err := service.MapVideoToDTO(*video)
 			if err != nil {
 				s.errBadRequest(w, err)
 			}
@@ -110,7 +110,7 @@ func (s *server) handleVideoGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		videoDTO, err := crud.MapVideoToDTO(video)
+		videoDTO, err := service.MapVideoToDTO(video)
 		if err != nil {
 			s.errBadRequest(w, err)
 		}
@@ -123,7 +123,7 @@ func (s *server) handleVideoGet() http.HandlerFunc {
 func (s *server) handleVideoUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		videoDTO := &crud.VideoDTO{}
+		videoDTO := &service.VideoDTO{}
 		if err := s.bodyToStruct(w, r, videoDTO); err != nil {
 			return
 		}

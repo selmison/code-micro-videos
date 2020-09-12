@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
@@ -16,26 +15,48 @@ import (
 
 func GetConfig() (Config, error) {
 	ctx := context.Background()
-	dbContainer, err := InitDBContainer(ctx)
-	if err != nil {
-		return Config{}, err
-	}
-	host, err := (*dbContainer).Host(ctx)
-	if err != nil {
-		return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
-	}
-	port, err := nat.NewPort("tcp", strconv.Itoa(dbPort))
-	if err != nil {
-		return Config{}, err
-	}
-	mappedPort, err := (*dbContainer).MappedPort(ctx, port)
-	if err != nil {
-		return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
-	}
+	//dbContainer, err := InitDBContainer(ctx)
+	//if err != nil {
+	//	return Config{}, err
+	//}
+	//host, err := (*dbContainer).Host(ctx)
+	//if err != nil {
+	//	return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
+	//}
+	//port, err := nat.NewPort("tcp", strconv.Itoa(dbPort))
+	//if err != nil {
+	//	return Config{}, err
+	//}
+	//mappedPort, err := (*dbContainer).MappedPort(ctx, port)
+	//if err != nil {
+	//	return Config{}, fmt.Errorf("access dbContainer: %s\n", err)
+	//}
+	//dbConnStr := fmt.Sprintf(
+	//	"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
+	//	host,
+	//	mappedPort.Int(),
+	//	dbName,
+	//	dbUser,
+	//	dbPass,
+	//	dbSSLMode,
+	//)
+	//return Config{
+	//	ctx,
+	//	dbContainer,
+	//	addressServer,
+	//	dbDrive,
+	//	dbName,
+	//	dbPort,
+	//	dbUser,
+	//	dbPass,
+	//	dbSSLMode,
+	//	dbConnStr,
+	//	memory.NewRepository(),
+	//}, nil
 	dbConnStr := fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
-		host,
-		mappedPort.Int(),
+		dbHost,
+		dbPort,
 		dbName,
 		dbUser,
 		dbPass,
@@ -43,7 +64,7 @@ func GetConfig() (Config, error) {
 	)
 	return Config{
 		ctx,
-		dbContainer,
+		nil,
 		addressServer,
 		dbDrive,
 		dbName,
@@ -81,8 +102,8 @@ func InitDBContainer(ctx context.Context) (*testcontainers.Container, error) {
 }
 
 func (c *Config) TerminateContainer() error {
-	if err := (*c.container).Terminate(c.ctx); err != nil {
-		return fmt.Errorf("terminate dbContainer: %s", err)
-	}
+	//if err := (*c.container).Terminate(c.ctx); err != nil {
+	//	return fmt.Errorf("terminate dbContainer: %s", err)
+	//}
 	return nil
 }

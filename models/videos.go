@@ -885,20 +885,20 @@ func removeCategoriesFromVideosSlice(o *Video, related []*Category) {
 	}
 }
 
-// AddGenresG adds the given related objects to the existing relationships
+// CreateGenresG adds the given related objects to the existing relationships
 // of the video, optionally inserting them as new records.
 // Appends related to o.R.Genres.
 // Sets related.R.Videos appropriately.
 // Uses the global database handle.
-func (o *Video) AddGenresG(ctx context.Context, insert bool, related ...*Genre) error {
-	return o.AddGenres(ctx, boil.GetContextDB(), insert, related...)
+func (o *Video) CreateGenresG(ctx context.Context, insert bool, related ...*Genre) error {
+	return o.CreateGenres(ctx, boil.GetContextDB(), insert, related...)
 }
 
-// AddGenres adds the given related objects to the existing relationships
+// CreateGenres adds the given related objects to the existing relationships
 // of the video, optionally inserting them as new records.
 // Appends related to o.R.Genres.
 // Sets related.R.Videos appropriately.
-func (o *Video) AddGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
+func (o *Video) CreateGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -976,7 +976,7 @@ func (o *Video) SetGenres(ctx context.Context, exec boil.ContextExecutor, insert
 	if o.R != nil {
 		o.R.Genres = nil
 	}
-	return o.AddGenres(ctx, exec, insert, related...)
+	return o.CreateGenres(ctx, exec, insert, related...)
 }
 
 // RemoveGenresG relationships from objects passed in.

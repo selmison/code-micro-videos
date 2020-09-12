@@ -11,7 +11,7 @@ import (
 	"github.com/volatiletech/null/v8"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/domain"
 )
 
 const (
@@ -71,19 +71,19 @@ var (
 		return func() int16 {
 			switch randomdata.Number(6) {
 			case 0:
-				return int16(crud.FreeRating)
+				return int16(domain.FreeRating)
 			case 1:
-				return int16(crud.TenRating)
+				return int16(domain.TenRating)
 			case 2:
-				return int16(crud.TwelveRating)
+				return int16(domain.TwelveRating)
 			case 3:
-				return int16(crud.FourteenRating)
+				return int16(domain.FourteenRating)
 			case 4:
-				return int16(crud.SixteenRating)
+				return int16(domain.SixteenRating)
 			case 5:
-				return int16(crud.EighteenRating)
+				return int16(domain.EighteenRating)
 			}
-			return int16(crud.FreeRating)
+			return int16(domain.FreeRating)
 		}(), nil
 	}).Attr("Duration", func(args factory.Args) (interface{}, error) {
 		return int16(randomdata.Number(1, 300)), nil
@@ -156,92 +156,92 @@ var (
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Actor),
+			Type: int16(domain.Actor),
 		},
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Director),
+			Type: int16(domain.Director),
 		},
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Actor),
+			Type: int16(domain.Actor),
 		},
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Actor),
+			Type: int16(domain.Actor),
 		},
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Director),
+			Type: int16(domain.Director),
 		},
 		{
 			ID:   uuid.New().String(),
 			Name: faker.Name(),
-			Type: int16(crud.Actor),
+			Type: int16(domain.Actor),
 		},
 	}
-	FakeCategoriesDTO  []crud.CategoryDTO
-	FakeGenresDTO      []crud.GenreDTO
-	FakeCastMembersDTO []crud.CastMemberDTO
+	FakeCategoriesDTO  []domain.CategoryValidatable
+	FakeGenresDTO      []domain.GenreValidatable
+	FakeCastMembersDTO []domain.CastMemberValidatable
 
 	FakeVideos     []models.Video
-	FakeVideosDTO  []crud.VideoDTO
+	FakeVideosDTO  []domain.VideoValidatable
 	FakeVideoSlice models.VideoSlice
 )
 
 func init() {
 	FakeVideos, FakeVideosDTO, FakeVideoSlice = generateFakeVideos(FakeVideosLength)
-	FakeCategoriesDTO = make([]crud.CategoryDTO, len(FakeCategories))
+	FakeCategoriesDTO = make([]domain.Category, len(FakeCategories))
 	for i, category := range FakeCategories {
-		FakeCategoriesDTO[i] = crud.CategoryDTO{
+		FakeCategoriesDTO[i] = domain.Category{
 			Name:        category.Name,
-			Description: category.Description.String,
+			Description: &category.Description.String,
 		}
 	}
-	FakeGenresDTO = make([]crud.GenreDTO, len(FakeGenres))
+	FakeGenresDTO = make([]domain.Genre, len(FakeGenres))
 	for i, user := range FakeGenres {
-		FakeGenresDTO[i] = crud.GenreDTO{
+		FakeGenresDTO[i] = domain.Genre{
 			Name: user.Name,
 		}
 	}
-	FakeCastMembersDTO = make([]crud.CastMemberDTO, len(FakeCastMembers))
+	FakeCastMembersDTO = make([]domain.CastMemberDTO, len(FakeCastMembers))
 	for i, castMember := range FakeCastMembers {
-		FakeCastMembersDTO[i] = crud.CastMemberDTO{
+		FakeCastMembersDTO[i] = domain.CastMemberDTO{
 			Name: castMember.Name,
-			Type: crud.CastMemberType(castMember.Type),
+			Type: domain.CastMemberType(castMember.Type),
 		}
 	}
 }
 
-func generateFakeVideos(length int) ([]models.Video, []crud.VideoDTO, models.VideoSlice) {
+func generateFakeVideos(length int) ([]models.Video, []domain.VideoDTO, models.VideoSlice) {
 	fakeVideos := make([]models.Video, length)
 	for i := 0; i < length; i++ {
 		fakeVideos[i] = *(videoFactory.MustCreate().(*models.Video))
 	}
-	fakeVideosDTO := make([]crud.VideoDTO, length)
+	fakeVideosDTO := make([]domain.VideoDTO, length)
 	for i, video := range fakeVideos {
-		categoriesDTO := make([]crud.CategoryDTO, len(video.R.Categories))
+		categoriesDTO := make([]domain.Category, len(video.R.Categories))
 		for i, category := range video.R.Categories {
-			categoriesDTO[i] = crud.CategoryDTO{
+			categoriesDTO[i] = domain.Category{
 				Name:        category.Name,
-				Description: category.Description.String,
+				Description: &category.Description.String,
 			}
 		}
-		genresDTO := make([]crud.GenreDTO, len(video.R.Genres))
+		genresDTO := make([]domain.Genre, len(video.R.Genres))
 		for i, genre := range video.R.Genres {
-			genresDTO[i] = crud.GenreDTO{
+			genresDTO[i] = domain.Genre{
 				Name: genre.Name,
 			}
 		}
 		yearLaunched := video.YearLaunched
 		opened := video.Opened.Bool
-		rating := crud.VideoRating(video.Rating)
+		rating := domain.VideoRating(video.Rating)
 		duration := video.Duration
-		fakeVideosDTO[i] = crud.VideoDTO{
+		fakeVideosDTO[i] = domain.VideoDTO{
 			Title:        video.Title,
 			Description:  video.Description,
 			YearLaunched: &yearLaunched,

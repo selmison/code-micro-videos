@@ -10,14 +10,13 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
 func (s *server) handleGenreCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		genreDTO := &crud.GenreDTO{}
+		genreDTO := &service.Genre{}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			s.errInternalServer(w, err)
@@ -31,7 +30,7 @@ func (s *server) handleGenreCreate() http.HandlerFunc {
 				s.errInternalServer(w, err)
 			}
 		}
-		if err := s.svc.AddGenre(*genreDTO); err != nil {
+		if err := s.svc.CreateGenre(r.Context(), *genreDTO); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
 				return
@@ -53,16 +52,16 @@ func (s *server) handleGenreCreate() http.HandlerFunc {
 
 func (s *server) handleGenresGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		genres, err := s.svc.GetGenres(math.MaxInt8)
+		genres, err := s.svc.GetGenres(nil, math.MaxInt8)
 		if err != nil {
 			s.errInternalServer(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		genresDTO := make([]crud.GenreDTO, len(genres))
+		genresDTO := make([]service.Genre, len(genres))
 		for i, genre := range genres {
-			genresDTO[i] = crud.GenreDTO{
+			genresDTO[i] = service.Genre{
 				Name: genre.Name,
 			}
 		}
@@ -74,11 +73,11 @@ func (s *server) handleGenresGet() http.HandlerFunc {
 
 func (s *server) handleGenreGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var genre models.Genre
+		var genre service.Genre
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
 		if genreName := params.ByName("name"); strings.TrimSpace(genreName) != "" {
-			genre, err = s.svc.FetchGenre(genreName)
+			genre, err = s.svc.FetchGenre(r.Context(), genreName)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -95,7 +94,7 @@ func (s *server) handleGenreGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		genreDTO := crud.GenreDTO{
+		genreDTO := service.Genre{
 			Name: genre.Name,
 		}
 		if err := json.NewEncoder(w).Encode(genreDTO); err != nil {
@@ -107,13 +106,13 @@ func (s *server) handleGenreGet() http.HandlerFunc {
 func (s *server) handleGenreUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		genreDTO := &crud.GenreDTO{}
+		genreDTO := &service.Genre{}
 		if err := s.bodyToStruct(w, r, genreDTO); err != nil {
 			return
 		}
 		params := httprouter.ParamsFromContext(r.Context())
 		if genreName := params.ByName("name"); strings.TrimSpace(genreName) != "" {
-			err = s.svc.UpdateGenre(genreName, *genreDTO)
+			err = s.svc.UpdateGenre(nil, genreName, *genreDTO)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -136,7 +135,7 @@ func (s *server) handleGenreDelete() http.HandlerFunc {
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
 		if genreName := params.ByName("name"); strings.TrimSpace(genreName) != "" {
-			err = s.svc.RemoveGenre(genreName)
+			err = s.svc.RemoveGenre(nil, genreName)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)

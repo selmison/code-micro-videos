@@ -10,5 +10,6 @@ var (
 	ErrInternalApplication = errors.New("internal application error")
 	ErrIsNotValidated      = errors.New("is not validated")
 	ErrIsRequired          = errors.New("is required")
+	ErrIsEmpty             = errors.New("is empty")
 	ErrAlreadyExists       = errors.New("already exists")
 )

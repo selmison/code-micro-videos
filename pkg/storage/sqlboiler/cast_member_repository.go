@@ -12,11 +12,11 @@ import (
 	. "github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (r Repository) UpdateCastMember(name string, castMemberDTO crud.CastMemberDTO) error {
+func (r Repository) UpdateCastMember(name string, castMemberDTO service.CastMemberDTO) error {
 	castMember, err := r.FetchCastMember(name)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (r Repository) UpdateCastMember(name string, castMemberDTO crud.CastMemberD
 	return nil
 }
 
-func (r Repository) AddCastMember(castMemberDTO crud.CastMemberDTO) error {
+func (r Repository) AddCastMember(castMemberDTO service.CastMemberDTO) error {
 	castMember := models.CastMember{
 		ID:   uuid.New().String(),
 		Name: strings.ToLower(strings.TrimSpace(castMemberDTO.Name)),

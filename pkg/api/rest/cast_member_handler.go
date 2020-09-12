@@ -11,13 +11,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
 func (s *server) handleCastMemberCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		castMemberDTO := &crud.CastMemberDTO{}
+		castMemberDTO := &service.CastMemberDTO{}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			s.errInternalServer(w, err)
@@ -60,11 +60,11 @@ func (s *server) handleCastMembersGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		castMembersDTO := make([]crud.CastMemberDTO, len(castMembers))
+		castMembersDTO := make([]service.CastMemberDTO, len(castMembers))
 		for i, castMember := range castMembers {
-			castMembersDTO[i] = crud.CastMemberDTO{
+			castMembersDTO[i] = service.CastMemberDTO{
 				Name: castMember.Name,
-				Type: crud.CastMemberType(castMember.Type),
+				Type: service.CastMemberType(castMember.Type),
 			}
 		}
 		if err := json.NewEncoder(w).Encode(castMembersDTO); err != nil {
@@ -96,7 +96,7 @@ func (s *server) handleCastMemberGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		castMemberDTO := crud.CastMemberDTO{
+		castMemberDTO := service.CastMemberDTO{
 			Name: castMember.Name,
 		}
 		if err := json.NewEncoder(w).Encode(castMemberDTO); err != nil {
@@ -108,7 +108,7 @@ func (s *server) handleCastMemberGet() http.HandlerFunc {
 func (s *server) handleCastMemberUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		castMemberDTO := &crud.CastMemberDTO{}
+		castMemberDTO := &service.CastMemberDTO{}
 		if err := s.bodyToStruct(w, r, castMemberDTO); err != nil {
 			return
 		}

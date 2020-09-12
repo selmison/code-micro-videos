@@ -1,0 +1,265 @@
+openapi: "3.0.0"
+
+info:
+  version: 0.0.1
+  title: Code Micro Videos
+  description: A API to Code Micro Videos
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: Selmison Miranda
+    email: selmison@gmail.com
+    url: http://github.com/selmison
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://{hostname}
+    variables:
+      hostname:
+        default: localhost
+
+paths:
+  /categories:
+    get:
+      description: |
+        Returns all categories from the system that the user has access to
+      operationId: categoriesGet
+      responses:
+        '200':
+          description: category response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriesDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      description: Creates a new category in the system. Duplicates are not allowed
+      operationId: categoryCreate
+      requestBody:
+        description: Category to create in the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDTO'
+      responses:
+        '201':
+          description: category creation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /categories/{name}:
+    get:
+      description: Returns a category based on a single name
+      operationId: categoryGetByName
+      parameters:
+        - name: name
+          in: path
+          description: name of category to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: category response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      description: deletes a single category based on the name supplied
+      operationId: categoryDelete
+      parameters:
+        - name: name
+          in: path
+          description: name of category to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: category deleted
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /genres:
+    get:
+      description: |
+        Returns all genres from the system that the user has access to
+      operationId: genresGet
+      responses:
+        '200':
+          description: genre response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenresDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      description: Creates a new genre in the system. Duplicates are not allowed
+      operationId: genreCreate
+      requestBody:
+        description: Category to create in the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDTO'
+      responses:
+        '201':
+          description: genre creation response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /genres/{name}:
+    get:
+      description: Returns a genre based on a single name
+      operationId: genreGetByName
+      parameters:
+        - name: name
+          in: path
+          description: name of genre to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: genre response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      description: deletes a single genre based on the name supplied
+      operationId: genreDelete
+      parameters:
+        - name: name
+          in: path
+          description: name of genre to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: genre deleted
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  schemas:
+    CategoryDTO:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenreOfCategory'
+
+    GenreDTO:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryOfGenre'
+
+    CategoryOfGenre:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+
+    GenreOfCategory:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    CategoriesDTO:
+      type: array
+      items:
+        $ref: '#/components/schemas/CategoryDTO'
+
+    GenresDTO:
+      type: array
+      items:
+        $ref: '#/components/schemas/GenreDTO'
+
+    Error:
+      type: object
+      required: [slug, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string

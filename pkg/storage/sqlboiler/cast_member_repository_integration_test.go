@@ -14,7 +14,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/testdata"
 )
@@ -35,7 +35,7 @@ func TestRepository_AddCastMember(t *testing.T) {
 		Name: fakeExistName,
 	}
 	type args struct {
-		castMemberDTO crud.CastMemberDTO
+		castMemberDTO service.CastMemberDTO
 	}
 	type returns struct {
 		castMember models.CastMember
@@ -49,7 +49,7 @@ func TestRepository_AddCastMember(t *testing.T) {
 	}{
 		{
 			name: "When name in CastMemberDTO already exists",
-			args: args{crud.CastMemberDTO{
+			args: args{service.CastMemberDTO{
 				Name: fakeExistName,
 			}},
 			want: returns{
@@ -63,7 +63,7 @@ func TestRepository_AddCastMember(t *testing.T) {
 		{
 			name: "When CastMemberDTO is right",
 			args: args{
-				crud.CastMemberDTO{
+				service.CastMemberDTO{
 					Name: fakeDoesNotExistName,
 				},
 			},
@@ -302,7 +302,7 @@ func TestRepository_UpdateCastMember(t *testing.T) {
 	}
 	type args struct {
 		name          string
-		castMemberDTO crud.CastMemberDTO
+		castMemberDTO service.CastMemberDTO
 	}
 	tests := []struct {
 		name    string
@@ -315,7 +315,7 @@ func TestRepository_UpdateCastMember(t *testing.T) {
 			name: "When name to update doesn't exist",
 			args: args{
 				fakeDoesNotExistName,
-				crud.CastMemberDTO{
+				service.CastMemberDTO{
 					Name: fakeNewDoestNotExistName,
 				},
 			},
@@ -326,7 +326,7 @@ func TestRepository_UpdateCastMember(t *testing.T) {
 			name: "When name exists and CastMemberDTO is right",
 			args: args{
 				fakeExistName,
-				crud.CastMemberDTO{
+				service.CastMemberDTO{
 					Name: fakeNewDoestNotExistName,
 				},
 			},
@@ -366,18 +366,18 @@ func TestCastMember_isValidUUIDHook(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When UUID is not validated",
+			name: "When ID is not validated",
 			args: args{
 				models.CastMember{
 					ID:   "fakeUUIDIsNotValidated",
 					Name: faker.FirstName(),
 				},
 			},
-			want:    fmt.Errorf("%s %w", "UUID", logger.ErrIsNotValidated),
+			want:    fmt.Errorf("%s %w", "ID", logger.ErrIsNotValidated),
 			wantErr: true,
 		},
 		{
-			name: "When UUID is validated",
+			name: "When ID is validated",
 			args: args{
 				models.CastMember{
 					ID:   uuid.New().String(),

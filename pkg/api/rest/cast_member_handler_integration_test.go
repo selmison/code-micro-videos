@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/bxcodec/faker/v3"
 
@@ -200,14 +201,7 @@ func Test_RestApi_Get_CastMembers(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				comp, err := JSONBytesEqual(body, tt.want.body)
-				if err != nil {
-					t.Errorf("read body: %v", err)
-					return
-				}
-				if !comp {
-					t.Errorf("\nresponse: %v\nwant: %v", string(body), string(tt.want.body))
-				}
+				assert.JSONEq(t, string(body), string(tt.want.body))
 			}
 		})
 	}

@@ -23,7 +23,7 @@ import (
 	"github.com/bxcodec/faker/v3"
 
 	"github.com/selmison/code-micro-videos/pkg/api/rest"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/storage/files/memory"
 	"github.com/selmison/code-micro-videos/testdata"
 )
@@ -74,11 +74,11 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -97,11 +97,11 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -120,11 +120,11 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"title":                    faker.Name(),
 					"description":              faker.Sentence(),
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -143,11 +143,11 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"title":                    faker.Name(),
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -170,7 +170,7 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -190,10 +190,10 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -213,7 +213,7 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeDoesNotExistGenreName,
 					"categories.0.name":        fakeDoesNotExistCategoryName,
@@ -237,11 +237,11 @@ func Test_RestApi_Post_Videos(t *testing.T) {
 					"description":              faker.Sentence(),
 					"year_launched":            "2020",
 					"opened":                   "false",
-					"rating":                   strconv.Itoa(int(crud.TenRating)),
+					"rating":                   strconv.Itoa(int(service.TenRating)),
 					"duration":                 "250",
 					"genres.0.name":            fakeExistGenreName,
 					"categories.0.name":        fakeExistCategoryName,
-					"categories.0.description": fakeExistCategoryDescription,
+					"categories.0.description": *fakeExistCategoryDescription,
 				},
 				fieldNameToFile: rest.VideoFileField,
 				pathFile:        seed.FakeTmpFilePath,
@@ -350,7 +350,7 @@ func Test_RestApi_Get_Videos(t *testing.T) {
 					t.Errorf("read body: %v", err)
 					return
 				}
-				assert.Equal(
+				assert.JSONEq(
 					t,
 					strings.TrimSpace(string(data)),
 					strings.TrimSpace(string(tt.want.body)),
@@ -439,12 +439,12 @@ func Test_RestApi_Get_Video(t *testing.T) {
 					return
 				}
 				if tt.name == "When title exists" {
-					videoBody := crud.VideoDTO{}
+					videoBody := service.VideoDTO{}
 					if err := json.Unmarshal(data, &videoBody); err != nil {
 						t.Errorf("unmarshal data: %v", err)
 						return
 					}
-					assert.Equal(t, videoBody, fakeExistVideoDTO, "they should be equal")
+					assert.ObjectsAreEqualValues(videoBody, fakeExistVideoDTO)
 					return
 				}
 			}
@@ -548,27 +548,30 @@ func Test_RestApi_Update_Video(t *testing.T) {
 	fakeExistVideo := testdata.FakeVideos[fakeVideosIndex]
 	fakeExistTitle := fakeExistVideo.Title
 	fakeDoesNotExistTitle := "doesNotExistTitle"
+	fakeExistDesc := fakeExistVideo.R.Categories[fakeCategoryIndex].Description.String
+	fakeDoesNotExistDesc := faker.Sentence()
+
 	fakeUrl := func(title string) string {
 		return fmt.Sprintf("http://%s/%s/%s", cfg.AddressServer, "videos", title)
 	}
-	fakeExistCategoryDTO := toJSON([]crud.CategoryDTO{
+	fakeExistCategoryDTO := toJSON([]service.Category{
 		{
 			Name:        fakeExistVideo.R.Categories[fakeCategoryIndex].Name,
-			Description: fakeExistVideo.R.Categories[fakeCategoryIndex].Description.String,
+			Description: &fakeExistDesc,
 		},
 	})
-	fakeDoesNotExistCategoryDTO := toJSON([]crud.CategoryDTO{
+	fakeDoesNotExistCategoryDTO := toJSON([]service.Category{
 		{
 			Name:        faker.FirstName(),
-			Description: faker.Sentence(),
+			Description: &fakeDoesNotExistDesc,
 		},
 	})
-	fakeExistGenreDTO := toJSON([]crud.GenreDTO{
+	fakeExistGenreDTO := toJSON([]service.Genre{
 		{
 			Name: fakeExistVideo.R.Genres[fakeGenreIndex].Name,
 		},
 	})
-	fakeDoesNotExistGenreDTO := toJSON([]crud.GenreDTO{
+	fakeDoesNotExistGenreDTO := toJSON([]service.Genre{
 		{
 			Name: faker.FirstName(),
 		},
@@ -600,7 +603,7 @@ func Test_RestApi_Update_Video(t *testing.T) {
 						faker.Sentence(),
 						2020,
 						false,
-						crud.TenRating,
+						service.TenRating,
 						250,
 						fakeExistGenreDTO,
 						fakeExistCategoryDTO,
@@ -624,7 +627,7 @@ func Test_RestApi_Update_Video(t *testing.T) {
 						faker.Sentence(),
 						2020,
 						false,
-						crud.TenRating,
+						service.TenRating,
 						250,
 						fakeDoesNotExistGenreDTO,
 						fakeDoesNotExistCategoryDTO,
@@ -648,7 +651,7 @@ func Test_RestApi_Update_Video(t *testing.T) {
 						faker.Sentence(),
 						2020,
 						false,
-						crud.TenRating,
+						service.TenRating,
 						250,
 						fakeExistGenreDTO,
 						fakeExistCategoryDTO,

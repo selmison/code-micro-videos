@@ -3,35 +3,25 @@ package rest
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/render"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud"
+	"github.com/selmison/code-micro-videos/pkg/crud/service"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
 func (s *server) handleCategoryCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		categoryDTO := &crud.CategoryDTO{}
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			s.errInternalServer(w, err)
+		dto := CategoryDTO{}
+		if err := render.Decode(r, &dto); err != nil {
+			s.errBadRequest(w, err)
+			return
 		}
-		if err := r.Body.Close(); err != nil {
-			s.errInternalServer(w, err)
-		}
-		if err := json.Unmarshal(body, &categoryDTO); err != nil {
-			s.errUnprocessableEntity(w, err)
-			if err := json.NewEncoder(w).Encode(err); err != nil {
-				s.errInternalServer(w, err)
-			}
-		}
-		if err := s.svc.AddCategory(*categoryDTO); err != nil {
+		if err := s.svc.CreateCategory(r.Context(), *mapToSvcCategory(dto)); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
 				return
@@ -57,18 +47,18 @@ func (s *server) handleCategoryCreate() http.HandlerFunc {
 
 func (s *server) handleCategoriesGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		categories, err := s.svc.GetCategories(math.MaxInt8)
+		categories, err := s.svc.GetCategories(r.Context(), math.MaxInt8)
 		if err != nil {
 			s.errInternalServer(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		categoriesDTO := make([]crud.CategoryDTO, len(categories))
+		categoriesDTO := make([]service.Category, len(categories))
 		for i, category := range categories {
-			categoriesDTO[i] = crud.CategoryDTO{
+			categoriesDTO[i] = service.Category{
 				Name:        category.Name,
-				Description: category.Description.String,
+				Description: category.Description,
 			}
 		}
 		if err := json.NewEncoder(w).Encode(categoriesDTO); err != nil {
@@ -79,11 +69,11 @@ func (s *server) handleCategoriesGet() http.HandlerFunc {
 
 func (s *server) handleCategoryGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var category models.Category
+		var category service.Category
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
 		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			category, err = s.svc.FetchCategory(categoryName)
+			category, err = s.svc.FetchCategory(r.Context(), categoryName)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -100,9 +90,9 @@ func (s *server) handleCategoryGet() http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		categoryDTO := crud.CategoryDTO{
+		categoryDTO := service.Category{
 			Name:        category.Name,
-			Description: category.Description.String,
+			Description: category.Description,
 		}
 		if err := json.NewEncoder(w).Encode(categoryDTO); err != nil {
 			s.errInternalServer(w, err)
@@ -113,13 +103,13 @@ func (s *server) handleCategoryGet() http.HandlerFunc {
 func (s *server) handleCategoryUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		categoryDTO := &crud.CategoryDTO{}
+		categoryDTO := &service.Category{}
 		if err := s.bodyToStruct(w, r, categoryDTO); err != nil {
 			return
 		}
 		params := httprouter.ParamsFromContext(r.Context())
 		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			err = s.svc.UpdateCategory(categoryName, *categoryDTO)
+			err = s.svc.UpdateCategory(r.Context(), categoryName, *categoryDTO)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -142,7 +132,7 @@ func (s *server) handleCategoryDelete() http.HandlerFunc {
 		var err error
 		params := httprouter.ParamsFromContext(r.Context())
 		if categoryName := params.ByName("name"); strings.TrimSpace(categoryName) != "" {
-			err = s.svc.RemoveCategory(categoryName)
+			err = s.svc.RemoveCategory(r.Context(), categoryName)
 			if err != nil {
 				if errors.Is(err, logger.ErrNotFound) {
 					s.errNotFound(w, err)
@@ -157,5 +147,20 @@ func (s *server) handleCategoryDelete() http.HandlerFunc {
 			s.errBadRequest(w, err)
 			return
 		}
+	}
+}
+
+func mapToSvcCategory(dto CategoryDTO) *service.Category {
+	var genres []service.GenreOfCategory
+	if dto.Genres != nil {
+		for _, genre := range *dto.Genres {
+			genres = append(genres, service.GenreOfCategory(genre))
+		}
+	}
+	return &service.Category{
+		Description: dto.Description,
+		Genres:      &genres,
+		Id:          dto.Id,
+		Name:        dto.Name,
 	}
 }

@@ -69,7 +69,7 @@ func setupTestMain() (func(m *testing.M), error) {
 	}, nil
 }
 
-func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *testing.T), error) {
+func setupTestCase(t *testing.T, fakes ...interface{}) (*config.Config, func(t *testing.T), error) {
 	db, err := sql.Open(cfg.DBDrive, cfg.DBConnStr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("test: failed to open DB: %v", err)
@@ -80,47 +80,49 @@ func setupTestCase(t *testing.T, fakes interface{}) (*config.Config, func(t *tes
 		}
 	}()
 	ctx := context.Background()
-	switch v := fakes.(type) {
-	case []models.Category:
-		for _, category := range v {
-			err = category.InsertG(ctx, boil.Infer())
-			if err != nil {
-				return nil, nil, fmt.Errorf("test: insert category: %s", err)
+	for _, fake := range fakes {
+		switch v := fake.(type) {
+		case []models.Category:
+			for _, category := range v {
+				err = category.InsertG(ctx, boil.Infer())
+				if err != nil {
+					return nil, nil, fmt.Errorf("test: insert category: %s", err)
+				}
 			}
-		}
-	case []models.Genre:
-		for _, genre := range v {
-			err = genre.InsertG(ctx, boil.Infer())
-			if err != nil {
-				return nil, nil, fmt.Errorf("test: insert genre: %s", err)
+		case []models.Genre:
+			for _, genre := range v {
+				err = genre.InsertG(ctx, boil.Infer())
+				if err != nil {
+					return nil, nil, fmt.Errorf("test: insert genre: %s", err)
+				}
 			}
-		}
-	case []models.CastMember:
-		for _, castMember := range v {
-			err = castMember.InsertG(ctx, boil.Infer())
-			if err != nil {
-				return nil, nil, fmt.Errorf("test: insert cast member: %s", err)
+		case []models.CastMember:
+			for _, castMember := range v {
+				err = castMember.InsertG(ctx, boil.Infer())
+				if err != nil {
+					return nil, nil, fmt.Errorf("test: insert cast member: %s", err)
+				}
 			}
-		}
-	case []models.Video:
-		for _, video := range v {
-			err = video.InsertG(ctx, boil.Infer())
-			if err != nil {
-				return nil, nil, fmt.Errorf("test: insert video: %s", err)
-			}
-			err = video.SetCategoriesG(ctx, true, video.R.Categories...)
-			if err != nil {
-				return nil, nil, fmt.Errorf(
-					"test: Insert new a group of categories and assign them to the video: %s",
-					err,
-				)
-			}
-			err = video.SetGenresG(ctx, true, video.R.Genres...)
-			if err != nil {
-				return nil, nil, fmt.Errorf(
-					"test: Insert new a group of genres and assign them to the video: %s",
-					err,
-				)
+		case []models.Video:
+			for _, video := range v {
+				err = video.InsertG(ctx, boil.Infer())
+				if err != nil {
+					return nil, nil, fmt.Errorf("test: insert video: %s", err)
+				}
+				err = video.SetCategoriesG(ctx, true, video.R.Categories...)
+				if err != nil {
+					return nil, nil, fmt.Errorf(
+						"test: Insert new a group of categories and assign them to the video: %s",
+						err,
+					)
+				}
+				err = video.SetGenresG(ctx, true, video.R.Genres...)
+				if err != nil {
+					return nil, nil, fmt.Errorf(
+						"test: Insert new a group of genres and assign them to the video: %s",
+						err,
+					)
+				}
 			}
 		}
 	}

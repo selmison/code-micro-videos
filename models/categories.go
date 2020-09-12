@@ -310,8 +310,8 @@ func (o *Category) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExec
 	return nil
 }
 
-// AddCategoryHook registers your hook function for all future operations.
-func AddCategoryHook(hookPoint boil.HookPoint, categoryHook CategoryHook) {
+// CreateCategoryHook registers your hook function for all future operations.
+func CreateCategoryHook(hookPoint boil.HookPoint, categoryHook CategoryHook) {
 	switch hookPoint {
 	case boil.BeforeInsertHook:
 		categoryBeforeInsertHooks = append(categoryBeforeInsertHooks, categoryHook)
@@ -702,20 +702,20 @@ func (categoryL) LoadVideos(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// AddGenresG adds the given related objects to the existing relationships
+// CreateGenresG adds the given related objects to the existing relationships
 // of the category, optionally inserting them as new records.
 // Appends related to o.R.Genres.
 // Sets related.R.Categories appropriately.
 // Uses the global database handle.
-func (o *Category) AddGenresG(ctx context.Context, insert bool, related ...*Genre) error {
-	return o.AddGenres(ctx, boil.GetContextDB(), insert, related...)
+func (o *Category) CreateGenresG(ctx context.Context, insert bool, related ...*Genre) error {
+	return o.CreateGenres(ctx, boil.GetContextDB(), insert, related...)
 }
 
-// AddGenres adds the given related objects to the existing relationships
+// CreateGenres adds the given related objects to the existing relationships
 // of the category, optionally inserting them as new records.
 // Appends related to o.R.Genres.
 // Sets related.R.Categories appropriately.
-func (o *Category) AddGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
+func (o *Category) CreateGenres(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Genre) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -793,7 +793,7 @@ func (o *Category) SetGenres(ctx context.Context, exec boil.ContextExecutor, ins
 	if o.R != nil {
 		o.R.Genres = nil
 	}
-	return o.AddGenres(ctx, exec, insert, related...)
+	return o.CreateGenres(ctx, exec, insert, related...)
 }
 
 // RemoveGenresG relationships from objects passed in.
