@@ -36,7 +36,7 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // AddCastMember mocks base method
-func (m *MockService) AddCastMember(arg0 context.Context, arg1 domain.GenreValidatable) error {
+func (m *MockService) AddCastMember(arg0 context.Context, arg1 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddCastMember", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -50,7 +50,7 @@ func (mr *MockServiceMockRecorder) AddCastMember(arg0, arg1 interface{}) *gomock
 }
 
 // CreateCategory mocks base method
-func (m *MockService) CreateCategory(arg0 context.Context, arg1 domain.GenreValidatable) error {
+func (m *MockService) CreateCategory(arg0 context.Context, arg1 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateCategory", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -64,7 +64,7 @@ func (mr *MockServiceMockRecorder) CreateCategory(arg0, arg1 interface{}) *gomoc
 }
 
 // CreateGenre mocks base method
-func (m *MockService) CreateGenre(arg0 context.Context, arg1 domain.GenreValidatable) error {
+func (m *MockService) CreateGenre(arg0 context.Context, arg1 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGenre", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -269,7 +269,7 @@ func (mr *MockServiceMockRecorder) RemoveVideo(arg0, arg1 interface{}) *gomock.C
 }
 
 // UpdateCastMember mocks base method
-func (m *MockService) UpdateCastMember(arg0 context.Context, arg1 string, arg2 domain.GenreValidatable) error {
+func (m *MockService) UpdateCastMember(arg0 context.Context, arg1 string, arg2 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCastMember", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -283,7 +283,7 @@ func (mr *MockServiceMockRecorder) UpdateCastMember(arg0, arg1, arg2 interface{}
 }
 
 // UpdateCategory mocks base method
-func (m *MockService) UpdateCategory(arg0 context.Context, arg1 string, arg2 domain.GenreValidatable) error {
+func (m *MockService) UpdateCategory(arg0 context.Context, arg1 string, arg2 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateCategory", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -297,7 +297,7 @@ func (mr *MockServiceMockRecorder) UpdateCategory(arg0, arg1, arg2 interface{}) 
 }
 
 // UpdateGenre mocks base method
-func (m *MockService) UpdateGenre(arg0 context.Context, arg1 string, arg2 domain.GenreValidatable) error {
+func (m *MockService) UpdateGenre(arg0 context.Context, arg1 string, arg2 domain.Genre) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateGenre", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

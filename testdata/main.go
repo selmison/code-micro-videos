@@ -184,12 +184,12 @@ var (
 			Type: int16(domain.Actor),
 		},
 	}
-	FakeCategoriesDTO  []domain.CategoryValidatable
-	FakeGenresDTO      []domain.GenreValidatable
-	FakeCastMembersDTO []domain.CastMemberValidatable
+	FakeCategoriesDTO  []domain.Category
+	FakeGenresDTO      []domain.Genre
+	FakeCastMembersDTO []domain.CastMember
 
 	FakeVideos     []models.Video
-	FakeVideosDTO  []domain.VideoValidatable
+	FakeVideosDTO  []domain.Video
 	FakeVideoSlice models.VideoSlice
 )
 

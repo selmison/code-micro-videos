@@ -28,4 +28,5 @@ require (
 	go.uber.org/zap v1.13.0
 	golang.org/x/sys v0.0.0-20200724161237-0e2f3a69832c // indirect
 	golang.org/x/text v0.3.3 // indirect
+	gotest.tools v0.0.0-20181223230014-1083505acf35
 )

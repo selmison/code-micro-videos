@@ -48,12 +48,12 @@ func (r Repository) UpdateVideo(title string, videoDTO service.VideoDTO) (uuid.U
 	video.Duration = *videoDTO.Duration
 	var videoFile multipart.File
 	fileName := null.String{}
-	if videoDTO.VideoFileHandler == nil {
+	if videoDTO.File == nil {
 		//TODO remove current video
-	} else if videoDTO.VideoFileHandler.Size > 0 {
+	} else if videoDTO.File.Size > 0 {
 		hash := sha256.New()
 		var err error
-		if videoFile, err = videoDTO.VideoFileHandler.Open(); err != nil {
+		if videoFile, err = videoDTO.File.Open(); err != nil {
 			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
 		}
 		if _, err := io.Copy(hash, videoFile); err != nil {
@@ -90,10 +90,10 @@ func (r Repository) AddVideo(videoDTO service.VideoDTO) (uuid.UUID, error) {
 	id := uuid.New()
 	var videoFile multipart.File
 	fileName := null.String{}
-	if videoDTO.VideoFileHandler != nil && videoDTO.VideoFileHandler.Size > 0 {
+	if videoDTO.File != nil && videoDTO.File.Size > 0 {
 		hash := sha256.New()
 		var err error
-		if videoFile, err = videoDTO.VideoFileHandler.Open(); err != nil {
+		if videoFile, err = videoDTO.File.Open(); err != nil {
 			return uuid.UUID{}, fmt.Errorf("could not genarete hash videoFile: %w", err)
 		}
 		if _, err := io.Copy(hash, videoFile); err != nil {
@@ -142,7 +142,7 @@ func (r Repository) AddVideo(videoDTO service.VideoDTO) (uuid.UUID, error) {
 		}
 		return uuid.UUID{}, err
 	}
-	if videoDTO.VideoFileHandler != nil && videoDTO.VideoFileHandler.Size > 0 {
+	if videoDTO.File != nil && videoDTO.File.Size > 0 {
 		if err := r.repoFiles.SaveFileToVideo(id, fileName.String, videoFile); err != nil {
 			if err := tx.Rollback(); err != nil {
 				return uuid.UUID{}, err

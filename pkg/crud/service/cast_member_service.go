@@ -10,12 +10,11 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s service) CreateCastMember(ctx domain.Context, fields domain.CastMemberValidatable) error {
-	castMember, err := domain.NewCastMember(fields)
-	if err != nil {
-		return fmt.Errorf("error CreateCastMember(): %w", err)
+func (s service) CreateCastMember(ctx domain.Context, castMember domain.CastMember) error {
+	if err := castMember.Validate(); err != nil {
+		return err
 	}
-	return s.r.CreateCastMember(ctx, *castMember)
+	return s.r.CreateCastMember(ctx, castMember)
 }
 
 func (s service) FetchCastMember(ctx domain.Context, name string) (domain.CastMember, error) {
@@ -53,13 +52,12 @@ func (s service) RemoveCastMember(ctx domain.Context, name string) error {
 	return nil
 }
 
-func (s service) UpdateCastMember(ctx domain.Context, name string, fields domain.CastMemberValidatable) error {
+func (s service) UpdateCastMember(ctx domain.Context, name string, castMember domain.CastMember) error {
 	name = strings.ToLower(strings.TrimSpace(name))
-	castMember, err := domain.NewCastMember(fields)
-	if err != nil {
-		return fmt.Errorf("error UpdateCastMember(): %w", err)
+	if err := castMember.Validate(); err != nil {
+		return err
 	}
-	if err := s.r.UpdateCastMember(ctx, name, *castMember); err != nil {
+	if err := s.r.UpdateCastMember(ctx, name, castMember); err != nil {
 		return err
 	}
 	return nil

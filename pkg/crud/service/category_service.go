@@ -10,12 +10,11 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s service) CreateCategory(ctx domain.Context, fields domain.CategoryValidatable) error {
-	category, err := domain.NewCategory(fields)
-	if err != nil {
+func (s service) CreateCategory(ctx domain.Context, category domain.Category) error {
+	if err := category.Validate(); err != nil {
 		return fmt.Errorf("error CreateCategory(): %w", err)
 	}
-	return s.r.CreateCategory(ctx, *category)
+	return s.r.CreateCategory(ctx, category)
 }
 
 func (s service) FetchCategory(ctx domain.Context, name string) (domain.Category, error) {
@@ -53,13 +52,12 @@ func (s service) RemoveCategory(ctx domain.Context, name string) error {
 	return nil
 }
 
-func (s service) UpdateCategory(ctx domain.Context, name string, fields domain.CategoryValidatable) error {
+func (s service) UpdateCategory(ctx domain.Context, name string, category domain.Category) error {
 	name = strings.ToLower(strings.TrimSpace(name))
-	category, err := domain.NewCategory(fields)
-	if err != nil {
+	if err := category.Validate(); err != nil {
 		return fmt.Errorf("error UpdateCategory(): %w", err)
 	}
-	if err := s.r.UpdateCategory(ctx, name, *category); err != nil {
+	if err := s.r.UpdateCategory(ctx, name, category); err != nil {
 		return err
 	}
 	return nil

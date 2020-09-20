@@ -28,8 +28,8 @@ func TestCreateGenre(t *testing.T) {
 	mockR := mock.NewMockRepository(ctrl)
 	fakeCtx := context.Background()
 	fakeName := strings.ToLower(faker.FirstName())
-	fakeDoesNotExistCategory := domain.CategoryValidatable{Name: faker.FirstName()}
-	fakeDoesNotExistCategories := []domain.CategoryValidatable{
+	fakeDoesNotExistCategory := domain.Category{Name: faker.FirstName()}
+	fakeDoesNotExistCategories := []domain.Category{
 		{
 			Id:          fakeDoesNotExistCategory.Id,
 			Name:        fakeDoesNotExistCategory.Name,
@@ -45,7 +45,7 @@ func TestCreateGenre(t *testing.T) {
 	}
 	type args struct {
 		ctx   context.Context
-		genre domain.GenreValidatable
+		genre domain.Genre
 	}
 	tests := []struct {
 		name    string
@@ -56,13 +56,13 @@ func TestCreateGenre(t *testing.T) {
 	}{
 		{
 			name:    "When Genre is not provided",
-			args:    args{fakeCtx, domain.GenreValidatable{}},
+			args:    args{fakeCtx, domain.Genre{}},
 			want:    returns{err: fmt.Errorf("genres %w", logger.ErrIsEmpty)},
 			wantErr: true,
 		},
 		{
 			name: "When the Name in Genre is blank",
-			args: args{fakeCtx, domain.GenreValidatable{
+			args: args{fakeCtx, domain.Genre{
 				Name: "    ",
 			}},
 			want:    returns{err: fmt.Errorf("'name' field %w", logger.ErrIsRequired)},
@@ -70,7 +70,7 @@ func TestCreateGenre(t *testing.T) {
 		},
 		{
 			name: "When the Name in Genre already exists",
-			args: args{fakeCtx, domain.GenreValidatable{
+			args: args{fakeCtx, domain.Genre{
 				Name:       strings.ToLower(faker.FirstName()),
 				Categories: fakeDoesNotExistCategories,
 			}},
@@ -80,7 +80,7 @@ func TestCreateGenre(t *testing.T) {
 		{
 			name: "When Genre is with wrong genres",
 			args: args{fakeCtx,
-				domain.GenreValidatable{
+				domain.Genre{
 					Name:       fakeName,
 					Categories: fakeDoesNotExistCategories,
 				},
@@ -90,7 +90,7 @@ func TestCreateGenre(t *testing.T) {
 		},
 		{
 			name: "When Genre is right",
-			args: args{fakeCtx, domain.GenreValidatable{
+			args: args{fakeCtx, domain.Genre{
 				Name:       fakeName,
 				Categories: fakeDoesNotExistCategories,
 			},
@@ -106,7 +106,7 @@ func TestCreateGenre(t *testing.T) {
 			if tt.name == "When the Name in Genre already exists" ||
 				tt.name == "When Genre is with wrong genres" ||
 				tt.name == "When Genre is right" {
-				genre := domain.GenreValidatable{
+				genre := domain.Genre{
 					Name:       strings.ToLower(strings.TrimSpace(tt.args.genre.Name)),
 					Categories: tt.args.genre.Categories,
 				}
@@ -203,16 +203,16 @@ func Test_service_UpdateGenre(t *testing.T) {
 	)
 	fakeCtx := context.Background()
 	fakeName := faker.FirstName()
-	fakeDoesNotExistCategory := domain.CategoryValidatable{Name: faker.FirstName()}
+	fakeDoesNotExistCategory := domain.Category{Name: faker.FirstName()}
 	fakeExistCategory := testdata.FakeCategoriesDTO[fakeCategoryIndex]
-	fakeDoesNotExistCategories := []domain.CategoryValidatable{
+	fakeDoesNotExistCategories := []domain.Category{
 		{
 			Id:          fakeDoesNotExistCategory.Id,
 			Name:        fakeDoesNotExistCategory.Name,
 			Description: fakeDoesNotExistCategory.Description,
 		},
 	}
-	fakeExistCategories := []domain.CategoryValidatable{
+	fakeExistCategories := []domain.Category{
 		{
 			Id:          fakeExistCategory.Id,
 			Name:        fakeExistCategory.Name,
@@ -225,7 +225,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		name  string
-		genre domain.GenreValidatable
+		genre domain.Genre
 	}
 	tests := []struct {
 		name    string
@@ -239,7 +239,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeCtx,
 				"     ",
-				domain.GenreValidatable{
+				domain.Genre{
 					Name: faker.FirstName(),
 				},
 			},
@@ -251,7 +251,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeCtx,
 				fakeExistName,
-				domain.GenreValidatable{
+				domain.Genre{
 					Name: "    ",
 				}},
 			want:    fmt.Errorf("'name' field %w", logger.ErrIsRequired),
@@ -262,7 +262,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeCtx,
 				fakeExistName,
-				domain.GenreValidatable{
+				domain.Genre{
 					Name:       fakeName,
 					Categories: fakeDoesNotExistCategories,
 				},
@@ -273,7 +273,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 		{
 			name: "When Genre is not provided",
 			args: args{
-				fakeCtx, fakeExistName, domain.GenreValidatable{}},
+				fakeCtx, fakeExistName, domain.Genre{}},
 			want:    fmt.Errorf("genres %w", logger.ErrIsEmpty),
 			wantErr: true,
 		},
@@ -282,7 +282,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeCtx,
 				fakeDoesNotExistName,
-				domain.GenreValidatable{
+				domain.Genre{
 					Name:       faker.FirstName(),
 					Categories: fakeExistCategories,
 				},
@@ -295,7 +295,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			args: args{
 				fakeCtx,
 				fakeExistName,
-				domain.GenreValidatable{
+				domain.Genre{
 					Name:       faker.FirstName(),
 					Categories: fakeDoesNotExistCategories,
 				},
@@ -311,7 +311,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 				tt.name == "When name is not found" ||
 				tt.name == "When Genre is right" {
 				name := strings.ToLower(strings.TrimSpace(tt.args.name))
-				genre := domain.GenreValidatable{
+				genre := domain.Genre{
 					Name:       strings.ToLower(strings.TrimSpace(tt.args.genre.Name)),
 					Categories: tt.args.genre.Categories,
 				}
@@ -337,7 +337,7 @@ func Test_service_GetGenres(t *testing.T) {
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
 	fakeCtx := context.Background()
-	fakeGenres := []domain.GenreValidatable{
+	fakeGenres := []domain.Genre{
 		{
 			Name: "action",
 		},
@@ -354,7 +354,7 @@ func Test_service_GetGenres(t *testing.T) {
 		limit int
 	}
 	type returns struct {
-		genres []domain.GenreValidatable
+		genres []domain.Genre
 		err    error
 	}
 	tests := []struct {
@@ -415,7 +415,7 @@ func Test_service_FetchGenre(t *testing.T) {
 		name string
 	}
 	type returns struct {
-		genre domain.GenreValidatable
+		genre domain.Genre
 		err   error
 	}
 	tests := []struct {
@@ -429,7 +429,7 @@ func Test_service_FetchGenre(t *testing.T) {
 			name: "When throw the error internal application",
 			args: args{fakeCtx, "anyName"},
 			want: returns{
-				domain.GenreValidatable{},
+				domain.Genre{},
 				fakeErrorInternalApplication,
 			},
 			wantErr: true,
@@ -437,7 +437,7 @@ func Test_service_FetchGenre(t *testing.T) {
 				mockR.EXPECT().
 					FetchGenre(fakeCtx, "anyname").
 					Return(
-						domain.GenreValidatable{},
+						domain.Genre{},
 						fakeErrorInternalApplication,
 					)
 			},
@@ -446,7 +446,7 @@ func Test_service_FetchGenre(t *testing.T) {
 			name: "When name is not found",
 			args: args{fakeCtx, fakeDoesNotExistName},
 			want: returns{
-				domain.GenreValidatable{},
+				domain.Genre{},
 				fmt.Errorf("%s: %w", fakeDoesNotExistName, logger.ErrNotFound),
 			},
 			wantErr: true,
@@ -454,7 +454,7 @@ func Test_service_FetchGenre(t *testing.T) {
 				mockR.EXPECT().
 					FetchGenre(fakeCtx, strings.ToLower(strings.TrimSpace(fakeDoesNotExistName))).
 					Return(
-						domain.GenreValidatable{},
+						domain.Genre{},
 						sql.ErrNoRows,
 					)
 			},
@@ -463,7 +463,7 @@ func Test_service_FetchGenre(t *testing.T) {
 			name: "When name is found",
 			args: args{fakeCtx, fakeExistName},
 			want: returns{
-				domain.GenreValidatable{
+				domain.Genre{
 					Name: fakeExistName,
 				},
 				nil,
@@ -473,7 +473,7 @@ func Test_service_FetchGenre(t *testing.T) {
 				mockR.EXPECT().
 					FetchGenre(fakeCtx, fakeExistName).
 					Return(
-						domain.GenreValidatable{
+						domain.Genre{
 							Name: fakeExistName,
 						},
 						nil,

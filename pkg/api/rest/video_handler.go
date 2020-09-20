@@ -35,12 +35,12 @@ func (s *server) handleVideoCreate() http.HandlerFunc {
 		if err := r.Body.Close(); err != nil {
 			s.errInternalServer(w, err)
 		}
-		_, videoFileHandler, err := r.FormFile(VideoFileField)
+		_, videoFile, err := r.FormFile(VideoFileField)
 		if err != nil {
 			s.errInternalServer(w, err)
 		}
-		videoDTO.VideoFileHandler = videoFileHandler
-		if _, err := s.svc.AddVideo(*videoDTO); err != nil {
+		videoDTO.File = videoFile
+		if _, err := s.svc.CreateVideo(ctx, *videoDTO); err != nil {
 			if errors.Is(err, logger.ErrIsRequired) {
 				s.errBadRequest(w, err)
 				return

@@ -7,16 +7,18 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
 	"github.com/selmison/code-micro-videos/pkg/crud/domain"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s service) CreateVideo(ctx domain.Context, fields domain.VideoValidatable) (uuid.UUID, error) {
-	video, err := domain.NewVideo(fields)
-	if err != nil {
+var validationFn func()
+
+func (s service) CreateVideo(ctx domain.Context, video domain.Video) (uuid.UUID, error) {
+	if err := video.Validate(); err != nil {
 		return uuid.UUID{}, fmt.Errorf("error CreateVideo(): %w", err)
 	}
-	return s.r.CreateVideo(ctx, *video)
+	return s.r.CreateVideo(ctx, video)
 }
 
 func (s service) FetchVideo(ctx domain.Context, title string) (domain.Video, error) {
@@ -54,13 +56,12 @@ func (s service) RemoveVideo(ctx domain.Context, title string) error {
 	return nil
 }
 
-func (s service) UpdateVideo(ctx domain.Context, title string, fields domain.VideoValidatable) error {
+func (s service) UpdateVideo(ctx domain.Context, title string, video domain.Video) error {
 	title = strings.ToLower(strings.TrimSpace(title))
-	video, err := domain.NewVideo(fields)
-	if err != nil {
+	if err := video.Validate(); err != nil {
 		return fmt.Errorf("error UpdateVideo(): %w", err)
 	}
-	if err := s.r.UpdateVideo(ctx, title, *video); err != nil {
+	if err := s.r.UpdateVideo(ctx, title, video); err != nil {
 		return err
 	}
 	return nil

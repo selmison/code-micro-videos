@@ -29,7 +29,7 @@ var (
 	fakeNotValidatedRating = new(domain.VideoRating)
 )
 
-func TestAddVideo(t *testing.T) {
+func TestCreateVideo(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockR := mock.NewMockRepository(ctrl)
@@ -56,7 +56,7 @@ func TestAddVideo(t *testing.T) {
 		err   error
 	}
 	type args struct {
-		dto domain.VideoValidatable
+		dto domain.Video
 	}
 	tests := []struct {
 		name    string
@@ -67,13 +67,13 @@ func TestAddVideo(t *testing.T) {
 	}{
 		{
 			name:    "When VideoDTO is not provided",
-			args:    args{domain.VideoValidatable{}},
+			args:    args{domain.Video{}},
 			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
 			name: "When the Title in VideoDTO is blank",
-			args: args{domain.VideoValidatable{
+			args: args{domain.Video{
 				Title:        "    ",
 				YearLaunched: fakeYearLaunched,
 				Opened:       fakeOpened,
@@ -85,7 +85,7 @@ func TestAddVideo(t *testing.T) {
 		},
 		{
 			name: "When the YearLaunched in VideoDTO is blank",
-			args: args{domain.VideoValidatable{
+			args: args{domain.Video{
 				Title:        fakeTitle,
 				YearLaunched: nil,
 				Opened:       fakeOpened,
@@ -97,7 +97,7 @@ func TestAddVideo(t *testing.T) {
 		},
 		{
 			name: "When the Rating in VideoDTO is blank",
-			args: args{domain.VideoValidatable{
+			args: args{domain.Video{
 				Title:        fakeTitle,
 				YearLaunched: fakeYearLaunched,
 				Opened:       fakeOpened,
@@ -109,7 +109,7 @@ func TestAddVideo(t *testing.T) {
 		},
 		{
 			name: "When the Duration in VideoDTO is blank",
-			args: args{domain.VideoValidatable{
+			args: args{domain.Video{
 				Title:        fakeTitle,
 				YearLaunched: fakeYearLaunched,
 				Opened:       fakeOpened,
@@ -122,7 +122,7 @@ func TestAddVideo(t *testing.T) {
 		{
 			name: "When VideoDTO is with wrong genres and genres",
 			args: args{
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
@@ -139,7 +139,7 @@ func TestAddVideo(t *testing.T) {
 		{
 			name: "When VideoDTO is without genres and genres",
 			args: args{
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
@@ -153,7 +153,7 @@ func TestAddVideo(t *testing.T) {
 		},
 		{
 			name: "When VideoDTO is right",
-			args: args{domain.VideoValidatable{
+			args: args{domain.Video{
 				Title:        fakeTitle,
 				Description:  fakeDesc,
 				YearLaunched: fakeYearLaunched,
@@ -282,7 +282,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 	}
 	type args struct {
 		title string
-		dto   domain.VideoValidatable
+		dto   domain.Video
 	}
 	type returns struct {
 		id  uuid.UUID
@@ -299,7 +299,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When title is blank",
 			args: args{
 				"     ",
-				domain.VideoValidatable{
+				domain.Video{
 					Title: faker.Name(),
 				},
 			},
@@ -308,7 +308,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 		},
 		{
 			name:    "When VideoDTO is not provided",
-			args:    args{fakeExistTitle, domain.VideoValidatable{}},
+			args:    args{fakeExistTitle, domain.Video{}},
 			want:    returns{err: fmt.Errorf("'Title' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
@@ -316,7 +316,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When the Title in VideoDTO is blank",
 			args: args{
 				title: fakeExistTitle,
-				dto: domain.VideoValidatable{
+				dto: domain.Video{
 					Title:        "    ",
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
@@ -330,7 +330,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When the YearLaunched in VideoDTO is blank",
 			args: args{
 				title: fakeExistTitle,
-				dto: domain.VideoValidatable{
+				dto: domain.Video{
 					Title:        fakeTitle,
 					YearLaunched: nil,
 					Opened:       fakeOpened,
@@ -344,7 +344,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When the Rating in VideoDTO is blank",
 			args: args{
 				title: fakeTitle,
-				dto: domain.VideoValidatable{
+				dto: domain.Video{
 					Title:        fakeTitle,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
@@ -358,7 +358,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When the Duration in VideoDTO is blank",
 			args: args{
 				title: fakeTitle,
-				dto: domain.VideoValidatable{
+				dto: domain.Video{
 					Title:        fakeTitle,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
@@ -373,7 +373,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When VideoDTO is with wrong genres and genres",
 			args: args{
 				fakeExistTitle,
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
@@ -391,7 +391,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When Category is without genres and genres",
 			args: args{
 				fakeExistTitle,
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					Description:  fakeDesc,
 					YearLaunched: fakeYearLaunched,
@@ -407,7 +407,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When title is not found",
 			args: args{
 				fakeDoesNotExistTitle,
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
@@ -424,7 +424,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 			name: "When title is found and VideoDTO is right",
 			args: args{
 				fakeExistTitle,
-				domain.VideoValidatable{
+				domain.Video{
 					Title:        fakeTitle,
 					YearLaunched: fakeYearLaunched,
 					Opened:       fakeOpened,
@@ -444,7 +444,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 				tt.name == "When VideoDTO is with wrong genres and genres" ||
 				tt.name == "When title is not found" ||
 				tt.name == "When title is found and VideoDTO is right" {
-				dto := domain.VideoValidatable{
+				dto := domain.Video{
 					Title:        strings.ToLower(strings.TrimSpace(tt.args.dto.Title)),
 					Description:  tt.args.dto.Description,
 					YearLaunched: tt.args.dto.YearLaunched,

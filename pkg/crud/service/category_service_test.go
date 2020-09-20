@@ -15,7 +15,7 @@ import (
 	"github.com/volatiletech/null/v8"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud/service"
+	"github.com/selmison/code-micro-videos/pkg/crud/domain"
 	"github.com/selmison/code-micro-videos/pkg/crud/service/mock"
 	"github.com/selmison/code-micro-videos/pkg/logger"
 	"github.com/selmison/code-micro-videos/pkg/storage/sqlboiler"
@@ -30,9 +30,9 @@ func TestCreateCategory(t *testing.T) {
 	fakeCtx := context.Background()
 	fakeName := faker.FirstName()
 	fakeDescription := faker.Sentence()
-	fakeDoesNotExistGenre := service.Genre{Name: faker.FirstName()}
+	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-	fakeExistGenreDTOs := []service.GenreOfCategory{
+	fakeExistGenreDTOs := []domain.Genre{
 		{fakeExistGenreDTO.Id, fakeDoesNotExistGenre.Name},
 	}
 	type fields struct {
@@ -44,7 +44,7 @@ func TestCreateCategory(t *testing.T) {
 	}
 	type args struct {
 		ctx context.Context
-		dto service.Category
+		dto domain.Category
 	}
 	tests := []struct {
 		name    string
@@ -55,25 +55,25 @@ func TestCreateCategory(t *testing.T) {
 	}{
 		{
 			name:    "When Category is not provided",
-			args:    args{fakeCtx, service.Category{}},
+			args:    args{fakeCtx, domain.Category{}},
 			want:    returns{err: fmt.Errorf("genres %w", logger.ErrIsEmpty)},
 			wantErr: true,
 		},
 		{
 			name: "When the Name in Category is blank",
-			args: args{fakeCtx, service.Category{
+			args: args{fakeCtx, domain.Category{
 				Name:        "    ",
-				Description: &fakeDescription,
+				Description: fakeDescription,
 			}},
 			want:    returns{err: fmt.Errorf("'name' field %w", logger.ErrIsRequired)},
 			wantErr: true,
 		},
 		{
 			name: "When the Name in Category already exists",
-			args: args{fakeCtx, service.Category{
+			args: args{fakeCtx, domain.Category{
 				Name:        fakeName,
-				Description: &fakeDescription,
-				Genres:      &fakeExistGenreDTOs,
+				Description: fakeDescription,
+				Genres:      fakeExistGenreDTOs,
 			},
 			},
 			want:    returns{err: logger.ErrAlreadyExists},
@@ -82,10 +82,10 @@ func TestCreateCategory(t *testing.T) {
 		{
 			name: "When Category is with wrong genres",
 			args: args{fakeCtx,
-				service.Category{
+				domain.Category{
 					Name:        fakeName,
-					Description: &fakeDescription,
-					Genres: &[]service.GenreOfCategory{
+					Description: fakeDescription,
+					Genres: []domain.Genre{
 						{fakeDoesNotExistGenre.Id, fakeDoesNotExistGenre.Name},
 					},
 				},
@@ -95,10 +95,10 @@ func TestCreateCategory(t *testing.T) {
 		},
 		{
 			name: "When Category is right",
-			args: args{fakeCtx, service.Category{
+			args: args{fakeCtx, domain.Category{
 				Name:        fakeName,
-				Description: &fakeDescription,
-				Genres:      &fakeExistGenreDTOs,
+				Description: fakeDescription,
+				Genres:      fakeExistGenreDTOs,
 			},
 			},
 			want: returns{models.Category{
@@ -114,17 +114,17 @@ func TestCreateCategory(t *testing.T) {
 			if tt.name == "When the Name in Category already exists" ||
 				tt.name == "When Category is with wrong genres" ||
 				tt.name == "When Category is right" {
-				desc := strings.TrimSpace(*tt.args.dto.Description)
-				category := service.Category{
+				desc := strings.TrimSpace(tt.args.dto.Description)
+				category := domain.Category{
 					Name:        strings.ToLower(strings.TrimSpace(tt.args.dto.Name)),
-					Description: &desc,
+					Description: desc,
 					Genres:      tt.args.dto.Genres,
 				}
 				mockR.EXPECT().
 					CreateCategory(tt.args.ctx, category).
 					Return(tt.want.err)
 			}
-			s := service.NewService(mockR)
+			s := domain.NewService(mockR)
 			err := s.CreateCategory(tt.args.ctx, tt.args.dto)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateCategory() error = '%v', wantErr '%v'", err, tt.wantErr)
@@ -189,7 +189,7 @@ func Test_service_RemoveCategory(t *testing.T) {
 					RemoveCategory(tt.args.ctx, name).
 					Return(tt.want)
 			}
-			s := service.NewService(mockR)
+			s := domain.NewService(mockR)
 			err := s.RemoveCategory(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RemoveCategory() error: %v, wantErr: %v", err, tt.wantErr)
@@ -214,9 +214,9 @@ func Test_service_UpdateCategory(t *testing.T) {
 	fakeCtx := context.Background()
 	fakeName := faker.FirstName()
 	fakeDescription := faker.Sentence()
-	fakeDoesNotExistGenre := service.Genre{Name: faker.FirstName()}
+	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
 	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
-	fakeExistGenreDTOs := []service.GenreOfCategory{
+	fakeExistGenreDTOs := []domain.Genre{
 		{fakeExistGenreDTO.Id, fakeExistGenreDTO.Name},
 	}
 	type fields struct {
@@ -225,7 +225,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 	type args struct {
 		ctx  context.Context
 		name string
-		dto  service.Category
+		dto  domain.Category
 	}
 	tests := []struct {
 		name    string
@@ -238,7 +238,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 			name: "When name is blank",
 			args: args{fakeCtx,
 				"     ",
-				service.Category{
+				domain.Category{
 					Name:        faker.FirstName(),
 					Description: &fakeDescription,
 				},
@@ -250,9 +250,9 @@ func Test_service_UpdateCategory(t *testing.T) {
 			name: "When the Name in Category is blank",
 			args: args{fakeCtx,
 				fakeExistName,
-				service.Category{
+				domain.Category{
 					Name:        "    ",
-					Description: &fakeDescription,
+					Description: fakeDescription,
 				}},
 			want:    fmt.Errorf("'name' field %w", logger.ErrIsRequired),
 			wantErr: true,
@@ -261,10 +261,10 @@ func Test_service_UpdateCategory(t *testing.T) {
 			name: "When Category is with wrong genres",
 			args: args{fakeCtx,
 				fakeExistName,
-				service.Category{
+				domain.Category{
 					Name:        fakeName,
-					Description: &fakeDescription,
-					Genres: &[]service.GenreOfCategory{
+					Description: fakeDescription,
+					Genres: []domain.Genre{
 						{fakeDoesNotExistGenre.Id, fakeDoesNotExistGenre.Name},
 					},
 				},
@@ -274,7 +274,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 		},
 		{
 			name:    "When Category is not provided",
-			args:    args{fakeCtx, fakeExistName, service.Category{}},
+			args:    args{fakeCtx, fakeExistName, domain.Category{}},
 			want:    fmt.Errorf("category %w", logger.ErrIsEmpty),
 			wantErr: true,
 		},
@@ -282,10 +282,10 @@ func Test_service_UpdateCategory(t *testing.T) {
 			name: "When name is not found",
 			args: args{fakeCtx,
 				fakeDoesNotExistName,
-				service.Category{
+				domain.Category{
 					Name:        faker.FirstName(),
-					Description: &fakeDescription,
-					Genres:      &fakeExistGenreDTOs,
+					Description: fakeDescription,
+					Genres:      fakeExistGenreDTOs,
 				},
 			},
 			want:    fmt.Errorf("%s: %w", fakeDoesNotExistName, logger.ErrNotFound),
@@ -295,10 +295,10 @@ func Test_service_UpdateCategory(t *testing.T) {
 			name: "When Category is right",
 			args: args{fakeCtx,
 				fakeExistName,
-				service.Category{
+				domain.Category{
 					Name:        faker.FirstName(),
-					Description: &fakeDescription,
-					Genres:      &fakeExistGenreDTOs,
+					Description: fakeDescription,
+					Genres:      fakeExistGenreDTOs,
 				},
 			},
 			want:    nil,
@@ -312,7 +312,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 				tt.name == "When name is not found" ||
 				tt.name == "When Category is right" {
 				name := strings.ToLower(strings.TrimSpace(tt.args.name))
-				category := service.Category{
+				category := domain.Category{
 					Name:        strings.ToLower(strings.TrimSpace(tt.args.dto.Name)),
 					Description: tt.args.dto.Description,
 					Genres:      tt.args.dto.Genres,
@@ -321,7 +321,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 					UpdateCategory(tt.args.ctx, name, category).
 					Return(tt.want)
 			}
-			s := service.NewService(mockR)
+			s := domain.NewService(mockR)
 			err := s.UpdateCategory(tt.args.ctx, tt.args.name, tt.args.dto)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateCategory() error: %v, wantErr: %v", err, tt.wantErr)
@@ -340,7 +340,7 @@ func Test_service_GetCategories(t *testing.T) {
 	mockR := mock.NewMockRepository(ctrl)
 	fakeCtx := context.Background()
 	fakeDesc := faker.Sentence()
-	fakeCategory := []service.Category{
+	fakeCategory := []domain.Category{
 		{
 			Name: faker.FirstName(),
 		},
@@ -358,7 +358,7 @@ func Test_service_GetCategories(t *testing.T) {
 		limit int
 	}
 	type returns struct {
-		categories []service.Category
+		categories []domain.Category
 		err        error
 	}
 	tests := []struct {
@@ -390,7 +390,7 @@ func Test_service_GetCategories(t *testing.T) {
 						nil,
 					)
 			}
-			s := service.NewService(mockR)
+			s := domain.NewService(mockR)
 			got, err := s.GetCategories(tt.args.ctx, tt.args.limit)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetCategories() error = %v, wantErr %v", err, tt.wantErr)
@@ -419,7 +419,7 @@ func Test_service_FetchCategory(t *testing.T) {
 		name string
 	}
 	type returns struct {
-		category service.Category
+		category domain.Category
 		err      error
 	}
 	tests := []struct {
@@ -432,7 +432,7 @@ func Test_service_FetchCategory(t *testing.T) {
 			name: "When name is not found",
 			args: args{fakeCtx, fakeDoesNotExistName},
 			want: returns{
-				service.Category{},
+				domain.Category{},
 				fmt.Errorf("%s: %w", fakeDoesNotExistName, logger.ErrNotFound),
 			},
 			wantErr: true,
@@ -441,7 +441,7 @@ func Test_service_FetchCategory(t *testing.T) {
 			name: "When name is found",
 			args: args{fakeCtx, fakeExistsName},
 			want: returns{
-				service.Category{
+				domain.Category{
 					Name: fakeExistsName,
 				},
 				nil,
@@ -462,11 +462,11 @@ func Test_service_FetchCategory(t *testing.T) {
 				mockR.EXPECT().
 					FetchCategory(tt.args.ctx, strings.ToLower(tt.args.name)).
 					Return(
-						service.Category{},
+						domain.Category{},
 						sql.ErrNoRows,
 					)
 			}
-			s := service.NewService(mockR)
+			s := domain.NewService(mockR)
 			got, err := s.FetchCategory(tt.args.ctx, tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchCategory() error = %v, wantErr %v", err, tt.wantErr)

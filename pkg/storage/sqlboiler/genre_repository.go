@@ -119,13 +119,13 @@ func (r Repository) GetGenresByIds(ctx domain.Context, ids []interface{}) ([]dom
 }
 
 func mapToDomainGenre(genre models.Genre) (*domain.Genre, error) {
-	var categories []domain.CategoryValidatable
+	var categories []domain.Category
 	if genre.R == nil {
 		categories = nil
 	} else {
 		categories = mapToCategoriesValidatable(genre.R.Categories)
 	}
-	genreValidatable := domain.GenreValidatable{
+	genreValidatable := domain.Genre{
 		Id:         genre.ID,
 		Name:       genre.Name,
 		Categories: categories,
@@ -133,15 +133,15 @@ func mapToDomainGenre(genre models.Genre) (*domain.Genre, error) {
 	return domain.NewGenre(genreValidatable)
 }
 
-func mapToGenresValidatable(genresSqlBoiler models.GenreSlice) []domain.GenreValidatable {
-	var genreValidatable []domain.GenreValidatable
+func mapToGenresValidatable(genresSqlBoiler models.GenreSlice) []domain.Genre {
+	var genreValidatable []domain.Genre
 	if genresSqlBoiler == nil || len(genresSqlBoiler) == 0 {
 		return nil
 	} else {
-		genreValidatable = make([]domain.GenreValidatable, len(genresSqlBoiler))
+		genreValidatable = make([]domain.Genre, len(genresSqlBoiler))
 		for j, genre := range genresSqlBoiler {
 			categories := mapToCategoriesValidatable(genre.R.Categories)
-			categoryValidatable := domain.GenreValidatable{
+			categoryValidatable := domain.Genre{
 				Id:         genre.ID,
 				Name:       genre.Name,
 				Categories: categories,
@@ -162,7 +162,7 @@ func (r Repository) RemoveGenreByName(ctx domain.Context, name string) error {
 	return err
 }
 
-func (r Repository) setCategoriesInGenre(ctx domain.Context, cs []domain.CategoryValidatable, genre models.Genre, tx *sql.Tx) error {
+func (r Repository) setCategoriesInGenre(ctx domain.Context, cs []domain.Category, genre models.Genre, tx *sql.Tx) error {
 	if cs == nil || len(cs) == 0 {
 		return nil
 	}

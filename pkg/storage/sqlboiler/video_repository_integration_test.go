@@ -71,7 +71,7 @@ func TestRepository_AddVideo(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "When VideoFileHandler in VideoDTO is omitted",
+			name: "When File in VideoDTO is omitted",
 			args: args{
 				service.VideoDTO{
 					Title:        fakeDoesNotExistTitle,

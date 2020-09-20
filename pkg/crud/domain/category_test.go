@@ -5,23 +5,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bxcodec/faker/v3"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-var (
-	fakeUUID = faker.UUIDHyphenated()
-	fakeName = faker.FirstName()
-)
-
-func TestGenreValidatable_Validate(t *testing.T) {
-
+func TestCategory_Validate(t *testing.T) {
 	type fields struct {
-		Id         string
-		Name       string
-		Categories []Category
+		Id          string
+		Name        string
+		Description string
+		Genres      []Genre
 	}
 	tests := []struct {
 		name          string
@@ -67,12 +61,13 @@ func TestGenreValidatable_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Genre{
-				Id:         tt.fields.Id,
-				Name:       tt.fields.Name,
-				Categories: tt.fields.Categories,
+			c := &Category{
+				Id:          tt.fields.Id,
+				Name:        tt.fields.Name,
+				Description: tt.fields.Description,
+				Genres:      tt.fields.Genres,
 			}
-			err := g.Validate()
+			err := c.Validate()
 			if tt.wantErr {
 				if assert.Error(t, err) {
 					assert.EqualError(t, err, tt.expectedError, "they should be equal")

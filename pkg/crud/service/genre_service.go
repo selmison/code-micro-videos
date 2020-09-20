@@ -10,12 +10,11 @@ import (
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 
-func (s service) CreateGenre(ctx domain.Context, fields domain.GenreValidatable) error {
-	genre, err := domain.NewGenre(fields)
-	if err != nil {
+func (s service) CreateGenre(ctx domain.Context, genre domain.Genre) error {
+	if err := genre.Validate(); err != nil {
 		return fmt.Errorf("error CreateGenre(): %w", err)
 	}
-	return s.r.CreateGenre(ctx, *genre)
+	return s.r.CreateGenre(ctx, genre)
 }
 
 func (s service) FetchGenre(ctx domain.Context, name string) (domain.Genre, error) {
@@ -53,13 +52,12 @@ func (s service) RemoveGenre(ctx domain.Context, name string) error {
 	return nil
 }
 
-func (s service) UpdateGenre(ctx domain.Context, name string, fields domain.GenreValidatable) error {
+func (s service) UpdateGenre(ctx domain.Context, name string, genre domain.Genre) error {
 	name = strings.ToLower(strings.TrimSpace(name))
-	genre, err := domain.NewGenre(fields)
-	if err != nil {
+	if err := genre.Validate(); err != nil {
 		return fmt.Errorf("error UpdateGenre(): %w", err)
 	}
-	if err := s.r.UpdateGenre(ctx, name, *genre); err != nil {
+	if err := s.r.UpdateGenre(ctx, name, genre); err != nil {
 		return err
 	}
 	return nil
