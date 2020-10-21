@@ -98,7 +98,7 @@ func (c *castMember) Type() CastMemberType {
 }
 
 func (c *castMember) UnmarshalJSON(b []byte) error {
-	castMemberDTO := castMemberDTO{}
+	castMemberDTO := CastMemberDTO{}
 	if err := json.Unmarshal(b, &castMemberDTO); err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (c *castMember) UnmarshalJSON(b []byte) error {
 }
 
 func (c castMember) MarshalJSON() ([]byte, error) {
-	castMemberDTO := castMemberDTO{
+	castMemberDTO := CastMemberDTO{
 		Id:   c.Id(),
 		Name: c.Name(),
 		Type: c.Type(),
@@ -143,8 +143,8 @@ func (c *castMember) validate() error {
 	return nil
 }
 
-// castMemberDTO contains the details of a CastMember.
-type castMemberDTO struct {
+// CastMemberDTO contains the details of a CastMember.
+type CastMemberDTO struct {
 	Id   string         `json:"id"`
 	Name string         `json:"name"`
 	Type CastMemberType `json:"type"`

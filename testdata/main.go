@@ -110,12 +110,12 @@ var (
 		return []string{FakeGenres[index].Id}, nil
 	})
 
-	FakeCategories    []category.Category
-	FakeNewCategories []category.NewCategory
-	FakeGenres        []genre.Genre
-	FakeNewGenres     []genre.NewGenre
-	FakeCastMembers   []cast_member.CastMember
-	//FakeCastMemberDTOs []cast_member.castMemberDTO
+	FakeCategories     []category.Category
+	FakeNewCategories  []category.NewCategory
+	FakeGenres         []genre.Genre
+	FakeNewGenres      []genre.NewGenre
+	FakeCastMembers    []cast_member.CastMember
+	FakeCastMemberDTOs []cast_member.CastMemberDTO
 	FakeNewCastMembers []cast_member.NewCastMemberDTO
 	FakeVideos         []video.Video
 	FakeNewVideos      []video.NewVideo
@@ -124,7 +124,7 @@ var (
 
 func init() {
 	var err error
-	FakeCastMembers, FakeNewCastMembers, err = generateFakeCastMembers(FakeCastMembersLength)
+	FakeCastMembers, FakeNewCastMembers, FakeCastMemberDTOs, err = generateFakeCastMembers(FakeCastMembersLength)
 	if err != nil {
 		log.Fatalf("init: failed to generateFakeCastMembers: %v\n", err)
 	}
@@ -153,27 +153,27 @@ func generateFakeCategories(length int) ([]category.Category, []category.NewCate
 func generateFakeCastMembers(length int) (
 	[]cast_member.CastMember,
 	[]cast_member.NewCastMemberDTO,
-	//[]cast_member.castMemberDTO,
+	[]cast_member.CastMemberDTO,
 	error,
 ) {
 	fakeNewCastMembers := make([]cast_member.NewCastMemberDTO, length)
 	fakeCastMembers := make([]cast_member.CastMember, length)
-	//fakeCastMemberDTOs := make([]cast_member.castMemberDTO, length)
+	fakeCastMemberDTOs := make([]cast_member.CastMemberDTO, length)
 	var err error
 	for i := 0; i < length; i++ {
 		fakeNewCastMembers[i] = *(newCastMemberFactory.MustCreate().(*cast_member.NewCastMemberDTO))
 		fakeCastMembers[i], err = cast_member.NewCastMember(
 			uuid.New().String(), fakeNewCastMembers[i])
 		if err != nil {
-			return nil, fakeNewCastMembers, err
+			return nil, fakeNewCastMembers, nil, err
 		}
-		//fakeCastMemberDTOs[i] = cast_member.castMemberDTO{
-		//	Id:   fakeCastMembers[i].Id(),
-		//	Name: fakeCastMembers[i].Name(),
-		//	Type: fakeCastMembers[i].Type(),
-		//}
+		fakeCastMemberDTOs[i] = cast_member.CastMemberDTO{
+			Id:   fakeCastMembers[i].Id(),
+			Name: fakeCastMembers[i].Name(),
+			Type: fakeCastMembers[i].Type(),
+		}
 	}
-	return fakeCastMembers, fakeNewCastMembers, nil
+	return fakeCastMembers, fakeNewCastMembers, fakeCastMemberDTOs, nil
 }
 
 func generateFakeGenres(length int) ([]genre.Genre, []genre.NewGenre) {

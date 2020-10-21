@@ -110,12 +110,6 @@ func Test_RestApi_Get_CastMembers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("test: failed to setup test case: %v\n", err)
 	}
-	fakeCastMemberMaps := make([]cast_member.CastMemberMap, len(fakeCastMembers))
-	for i, castMember := range fakeCastMembers {
-		fakeCastMemberMaps[i] = cast_member.CastMemberMap{
-			"cast_member": castMember,
-		}
-	}
 	defer teardownTestCase(t)
 	srv := httptest.NewServer(rest.NewServer())
 	defer srv.Close()
@@ -155,7 +149,12 @@ func Test_RestApi_Get_CastMembers(t *testing.T) {
 					if err := json.NewDecoder(got.Body).Decode(&listResponse); err != nil {
 						t.Fatalf("could not decode response: %v", err)
 					}
-					require.ElementsMatch(t, listResponse.CastMembers, fakeCastMemberMaps, "they should be equal")
+					require.ElementsMatch(
+						t,
+						listResponse.CastMembers,
+						testdata.FakeCastMemberDTOs,
+						"they should be equal",
+					)
 				}
 			}
 		})
