@@ -48,7 +48,7 @@ func TestRepository_AddVideo(t *testing.T) {
 	*fakeRating = service.TwelveRating
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
 	fakeDoesNotExistCategoryDTO := service.Category{Name: faker.FirstName(), Description: &fakeDesc}
-	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenreDTO := testdata.FakeNewGenres[fakeGenreIndex]
 	fakeDoesNotExistGenreDTO := service.Genre{Name: faker.FirstName()}
 	if err := repository.CreateCategory(fakeCtx, fakeExistCategoryDTO); err != nil {
 		t.Errorf("test: insert category: %s", err)

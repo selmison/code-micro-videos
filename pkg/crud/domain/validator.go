@@ -9,16 +9,16 @@ type Validator interface {
 	IsValidated() bool
 }
 
-type validator struct {
-	err error
-}
-
-func (e *Event) Validate() error {
-	return Check(
-		Cf(e.Id <= 0, "Expected ID <= 0, got %d.", e.Id),
-		Cf(e.Start.UnixNano() > e.End.UnixNano(), "Expected start < end, got %s >= %s.", e.Start, e.End),
-	)
-}
+//type validator struct {
+//	err error
+//}
+//
+//func (e *Event) Validate() error {
+//	return Check(
+//		Cf(e.Id <= 0, "Expected ID <= 0, got %d.", e.Id),
+//		Cf(e.Start.UnixNano() > e.End.UnixNano(), "Expected start < end, got %s >= %s.", e.Start, e.End),
+//	)
+//}
 
 type C struct {
 	check bool
@@ -71,10 +71,10 @@ func Check(args ...C) error {
 //	return true
 //}
 
-func (v *validator) IsValid() bool {
-	return v.err != nil
-}
-
-func (v *validator) Error() string {
-	return v.err.Error()
-}
+//func (v *validator) IsValid() bool {
+//	return v.err != nil
+//}
+//
+//func (v *validator) Error() string {
+//	return v.err.Error()
+//}

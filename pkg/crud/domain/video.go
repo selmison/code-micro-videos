@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"mime/multipart"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/selmison/code-micro-videos/pkg/logger"
 )
 

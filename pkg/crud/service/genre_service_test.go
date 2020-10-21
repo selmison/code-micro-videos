@@ -57,7 +57,7 @@ func TestCreateGenre(t *testing.T) {
 		{
 			name:    "When Genre is not provided",
 			args:    args{fakeCtx, domain.Genre{}},
-			want:    returns{err: fmt.Errorf("genres %w", logger.ErrIsEmpty)},
+			want:    returns{err: fmt.Errorf("genres %w", logger.ErrCouldNotBeEmpty)},
 			wantErr: true,
 		},
 		{
@@ -274,7 +274,7 @@ func Test_service_UpdateGenre(t *testing.T) {
 			name: "When Genre is not provided",
 			args: args{
 				fakeCtx, fakeExistName, domain.Genre{}},
-			want:    fmt.Errorf("genres %w", logger.ErrIsEmpty),
+			want:    fmt.Errorf("genres %w", logger.ErrCouldNotBeEmpty),
 			wantErr: true,
 		},
 		{

@@ -31,7 +31,7 @@ func TestCreateCategory(t *testing.T) {
 	fakeName := faker.FirstName()
 	fakeDescription := faker.Sentence()
 	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
-	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenreDTO := testdata.FakeNewGenres[fakeGenreIndex]
 	fakeExistGenreDTOs := []domain.Genre{
 		{fakeExistGenreDTO.Id, fakeDoesNotExistGenre.Name},
 	}
@@ -56,7 +56,7 @@ func TestCreateCategory(t *testing.T) {
 		{
 			name:    "When Category is not provided",
 			args:    args{fakeCtx, domain.Category{}},
-			want:    returns{err: fmt.Errorf("genres %w", logger.ErrIsEmpty)},
+			want:    returns{err: fmt.Errorf("genres %w", logger.ErrCouldNotBeEmpty)},
 			wantErr: true,
 		},
 		{
@@ -215,7 +215,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 	fakeName := faker.FirstName()
 	fakeDescription := faker.Sentence()
 	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
-	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenreDTO := testdata.FakeNewGenres[fakeGenreIndex]
 	fakeExistGenreDTOs := []domain.Genre{
 		{fakeExistGenreDTO.Id, fakeExistGenreDTO.Name},
 	}
@@ -275,7 +275,7 @@ func Test_service_UpdateCategory(t *testing.T) {
 		{
 			name:    "When Category is not provided",
 			args:    args{fakeCtx, fakeExistName, domain.Category{}},
-			want:    fmt.Errorf("category %w", logger.ErrIsEmpty),
+			want:    fmt.Errorf("category %w", logger.ErrCouldNotBeEmpty),
 			wantErr: true,
 		},
 		{

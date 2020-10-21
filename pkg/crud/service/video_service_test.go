@@ -43,7 +43,7 @@ func TestCreateVideo(t *testing.T) {
 	*fakeDuration = 90
 	*fakeRating = domain.TwelveRating
 	*fakeNotValidatedRating = 111
-	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenreDTO := testdata.FakeNewGenres[fakeGenreIndex]
 	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[0]
 	fakeDoesNotExistCategory := domain.Category{Name: faker.FirstName(), Description: &fakeDesc}
@@ -272,7 +272,7 @@ func Test_service_UpdateVideo(t *testing.T) {
 	*fakeDuration = 90
 	*fakeRating = domain.TwelveRating
 	*fakeNotValidatedRating = 111
-	fakeExistGenreDTO := testdata.FakeGenresDTO[fakeGenreIndex]
+	fakeExistGenreDTO := testdata.FakeNewGenres[fakeGenreIndex]
 	fakeDoesNotExistGenre := domain.Genre{Name: faker.FirstName()}
 	fakeExistCategoryDTO := testdata.FakeCategoriesDTO[fakeCategoryIndex]
 	fakeDoesNotExistCategory := domain.Category{Name: faker.FirstName(), Description: &fakeDesc}

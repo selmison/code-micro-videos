@@ -1,36 +1,53 @@
 package testdata
 
 import (
+	"log"
 	"math/rand"
 	"strings"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/bluele/factory-go/factory"
-	"github.com/bxcodec/faker/v3"
 	"github.com/google/uuid"
-	"github.com/volatiletech/null/v8"
 
 	"github.com/selmison/code-micro-videos/models"
-	"github.com/selmison/code-micro-videos/pkg/crud/domain"
+	"github.com/selmison/code-micro-videos/pkg/cast_member"
+	"github.com/selmison/code-micro-videos/pkg/category"
+	"github.com/selmison/code-micro-videos/pkg/genre"
+	"github.com/selmison/code-micro-videos/pkg/video"
 )
 
 const (
-	FakeVideosLength           = 10
-	fakeVideosCategoriesLength = 3
-	fakeVideosGenresLength     = 3
+	FakeCastMembersLength = 10
+	FakeCategoriesLength  = 10
+	FakeGenresLength      = 10
+	FakeVideosLength      = 10
 )
 
 var (
+	newCastMemberFactory = factory.NewFactory(
+		&cast_member.NewCastMemberDTO{},
+	).Attr("Name", func(args factory.Args) (interface{}, error) {
+		return strings.TrimSpace(randomdata.FullName(randomdata.RandomGender)), nil
+	}).Attr("Type", func(args factory.Args) (interface{}, error) {
+		return func() cast_member.CastMemberType {
+			switch randomdata.Number(2) {
+			case 0:
+				return cast_member.Actor
+			}
+			return cast_member.Director
+		}(), nil
+	})
+
 	categoryFactory = factory.NewFactory(
-		&models.Category{},
-	).Attr("ID", func(args factory.Args) (interface{}, error) {
+		&category.Category{},
+	).Attr("Id", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Name", func(args factory.Args) (interface{}, error) {
 		return strings.ToLower(randomdata.SillyName()), nil
 	}).Attr("Description", func(args factory.Args) (interface{}, error) {
-		desc := null.String{String: "", Valid: true}
+		desc := ""
 		if rand.Intn(2) == 0 {
-			desc = null.String{String: randomdata.Paragraph(), Valid: true}
+			desc = randomdata.Paragraph()
 		}
 		return desc, nil
 	}).Attr("IsValidated", func(args factory.Args) (interface{}, error) {
@@ -42,8 +59,8 @@ var (
 	})
 
 	genreFactory = factory.NewFactory(
-		&models.Genre{},
-	).Attr("ID", func(args factory.Args) (interface{}, error) {
+		&genre.Genre{},
+	).Attr("Id", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Name", func(args factory.Args) (interface{}, error) {
 		return strings.ToLower(randomdata.SillyName()), nil
@@ -56,214 +73,159 @@ var (
 	})
 
 	videoFactory = factory.NewFactory(
-		&models.Video{},
-	).Attr("ID", func(args factory.Args) (interface{}, error) {
+		&video.Video{},
+	).Attr("Id", func(args factory.Args) (interface{}, error) {
 		return uuid.New().String(), nil
 	}).Attr("Title", func(args factory.Args) (interface{}, error) {
-		return strings.ToLower(randomdata.FullName(randomdata.RandomGender)), nil
+		return strings.TrimSpace(randomdata.FullName(randomdata.RandomGender)), nil
 	}).Attr("Description", func(args factory.Args) (interface{}, error) {
 		return randomdata.Paragraph(), nil
 	}).Attr("YearLaunched", func(args factory.Args) (interface{}, error) {
 		return int16(randomdata.Number(1900, 2030)), nil
 	}).Attr("Opened", func(args factory.Args) (interface{}, error) {
-		return null.BoolFrom(randomdata.Boolean()), nil
+		return randomdata.Boolean(), nil
 	}).Attr("Rating", func(args factory.Args) (interface{}, error) {
-		return func() int16 {
+		return func() video.VideoRating {
 			switch randomdata.Number(6) {
 			case 0:
-				return int16(domain.FreeRating)
+				return video.FreeRating
 			case 1:
-				return int16(domain.TenRating)
+				return video.TenRating
 			case 2:
-				return int16(domain.TwelveRating)
+				return video.TwelveRating
 			case 3:
-				return int16(domain.FourteenRating)
+				return video.FourteenRating
 			case 4:
-				return int16(domain.SixteenRating)
+				return video.SixteenRating
 			case 5:
-				return int16(domain.EighteenRating)
+				return video.EighteenRating
 			}
-			return int16(domain.FreeRating)
+			return video.FreeRating
 		}(), nil
-	}).Attr("Duration", func(args factory.Args) (interface{}, error) {
-		return int16(randomdata.Number(1, 300)), nil
-	}).SubFactory("R", videoRFactory)
-
-	videoRFactory = factory.NewFactory(
-		models.Video{}.R.NewStruct(),
-	).SubSliceFactory("Categories", categoryFactory, func() int {
-		return fakeVideosCategoriesLength
-	}).SubSliceFactory("Genres", genreFactory, func() int {
-		return fakeVideosGenresLength
+	}).Attr("CategoriesId", func(args factory.Args) (interface{}, error) {
+		index := randomdata.Number(FakeCategoriesLength)
+		return []string{FakeCategories[index].Id}, nil
+	}).Attr("GenresId", func(args factory.Args) (interface{}, error) {
+		index := randomdata.Number(FakeGenresLength)
+		return []string{FakeGenres[index].Id}, nil
 	})
 
-	FakeCategories = []models.Category{
-		{
-			ID:          uuid.New().String(),
-			Name:        "action",
-			Description: null.String{String: "action films", Valid: true},
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "animation",
-		},
-		{
-			ID:          uuid.New().String(),
-			Name:        "science fiction",
-			Description: null.String{String: "science fiction films", Valid: true},
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "violent",
-		},
-		{
-			ID:          uuid.New().String(),
-			Name:        "drama",
-			Description: null.String{String: "drama films", Valid: true},
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "romance",
-		},
-	}
-	FakeGenres = []models.Genre{
-		{
-			ID:   uuid.New().String(),
-			Name: "action",
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "animation",
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "science fiction",
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "violent",
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "drama",
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: "romance",
-		},
-	}
-	FakeCastMembers = []models.CastMember{
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Actor),
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Director),
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Actor),
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Actor),
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Director),
-		},
-		{
-			ID:   uuid.New().String(),
-			Name: faker.Name(),
-			Type: int16(domain.Actor),
-		},
-	}
-	FakeCategoriesDTO  []domain.Category
-	FakeGenresDTO      []domain.Genre
-	FakeCastMembersDTO []domain.CastMember
-
-	FakeVideos     []models.Video
-	FakeVideosDTO  []domain.Video
-	FakeVideoSlice models.VideoSlice
+	FakeCategories    []category.Category
+	FakeNewCategories []category.NewCategory
+	FakeGenres        []genre.Genre
+	FakeNewGenres     []genre.NewGenre
+	FakeCastMembers   []cast_member.CastMember
+	//FakeCastMemberDTOs []cast_member.castMemberDTO
+	FakeNewCastMembers []cast_member.NewCastMemberDTO
+	FakeVideos         []video.Video
+	FakeNewVideos      []video.NewVideo
+	FakeVideoSlice     models.VideoSlice
 )
 
 func init() {
-	FakeVideos, FakeVideosDTO, FakeVideoSlice = generateFakeVideos(FakeVideosLength)
-	FakeCategoriesDTO = make([]domain.Category, len(FakeCategories))
-	for i, category := range FakeCategories {
-		FakeCategoriesDTO[i] = domain.Category{
-			Name:        category.Name,
-			Description: &category.Description.String,
-		}
+	var err error
+	FakeCastMembers, FakeNewCastMembers, err = generateFakeCastMembers(FakeCastMembersLength)
+	if err != nil {
+		log.Fatalf("init: failed to generateFakeCastMembers: %v\n", err)
 	}
-	FakeGenresDTO = make([]domain.Genre, len(FakeGenres))
-	for i, user := range FakeGenres {
-		FakeGenresDTO[i] = domain.Genre{
-			Name: user.Name,
-		}
-	}
-	FakeCastMembersDTO = make([]domain.CastMemberDTO, len(FakeCastMembers))
-	for i, castMember := range FakeCastMembers {
-		FakeCastMembersDTO[i] = domain.CastMemberDTO{
-			Name: castMember.Name,
-			Type: domain.CastMemberType(castMember.Type),
-		}
-	}
+	FakeCategories, FakeNewCategories = generateFakeCategories(FakeCategoriesLength)
+	FakeGenres, FakeNewGenres = generateFakeGenres(FakeGenresLength)
+	FakeVideos, FakeNewVideos, FakeVideoSlice = generateFakeVideos(FakeVideosLength)
 }
 
-func generateFakeVideos(length int) ([]models.Video, []domain.VideoDTO, models.VideoSlice) {
-	fakeVideos := make([]models.Video, length)
+func generateFakeCategories(length int) ([]category.Category, []category.NewCategory) {
+	fakeCategories := make([]category.Category, length)
 	for i := 0; i < length; i++ {
-		fakeVideos[i] = *(videoFactory.MustCreate().(*models.Video))
+		fakeCategories[i] = *(categoryFactory.MustCreate().(*category.Category))
 	}
-	fakeVideosDTO := make([]domain.VideoDTO, length)
-	for i, video := range fakeVideos {
-		categoriesDTO := make([]domain.Category, len(video.R.Categories))
-		for i, category := range video.R.Categories {
-			categoriesDTO[i] = domain.Category{
-				Name:        category.Name,
-				Description: &category.Description.String,
-			}
+	fakeNewCategory := make([]category.NewCategory, length)
+	for i, fakeCategory := range fakeCategories {
+		fakeNewCategory[i] = category.NewCategory{
+			Name:        fakeCategory.Name,
+			Description: fakeCategory.Description,
+			GenresId:    fakeCategory.GenresId,
+			IsValidated: fakeCategory.IsValidated,
 		}
-		genresDTO := make([]domain.Genre, len(video.R.Genres))
-		for i, genre := range video.R.Genres {
-			genresDTO[i] = domain.Genre{
-				Name: genre.Name,
-			}
+	}
+	return fakeCategories, fakeNewCategory
+}
+
+func generateFakeCastMembers(length int) (
+	[]cast_member.CastMember,
+	[]cast_member.NewCastMemberDTO,
+	//[]cast_member.castMemberDTO,
+	error,
+) {
+	fakeNewCastMembers := make([]cast_member.NewCastMemberDTO, length)
+	fakeCastMembers := make([]cast_member.CastMember, length)
+	//fakeCastMemberDTOs := make([]cast_member.castMemberDTO, length)
+	var err error
+	for i := 0; i < length; i++ {
+		fakeNewCastMembers[i] = *(newCastMemberFactory.MustCreate().(*cast_member.NewCastMemberDTO))
+		fakeCastMembers[i], err = cast_member.NewCastMember(
+			uuid.New().String(), fakeNewCastMembers[i])
+		if err != nil {
+			return nil, fakeNewCastMembers, err
 		}
-		yearLaunched := video.YearLaunched
-		opened := video.Opened.Bool
-		rating := domain.VideoRating(video.Rating)
-		duration := video.Duration
-		fakeVideosDTO[i] = domain.VideoDTO{
-			Title:        video.Title,
-			Description:  video.Description,
-			YearLaunched: &yearLaunched,
-			Opened:       opened,
-			Rating:       &rating,
-			Duration:     &duration,
-			Categories:   categoriesDTO,
-			Genres:       genresDTO,
+		//fakeCastMemberDTOs[i] = cast_member.castMemberDTO{
+		//	Id:   fakeCastMembers[i].Id(),
+		//	Name: fakeCastMembers[i].Name(),
+		//	Type: fakeCastMembers[i].Type(),
+		//}
+	}
+	return fakeCastMembers, fakeNewCastMembers, nil
+}
+
+func generateFakeGenres(length int) ([]genre.Genre, []genre.NewGenre) {
+	fakeGenres := make([]genre.Genre, length)
+	for i := 0; i < length; i++ {
+		fakeGenres[i] = *(genreFactory.MustCreate().(*genre.Genre))
+	}
+	fakeNewGenre := make([]genre.NewGenre, length)
+	for i, fakeGenre := range fakeGenres {
+		fakeNewGenre[i] = genre.NewGenre{
+			Name:         fakeGenre.Name,
+			CategoriesId: fakeGenre.CategoriesId,
+			IsValidated:  fakeGenre.IsValidated,
+		}
+	}
+	return fakeGenres, fakeNewGenre
+}
+
+func generateFakeVideos(length int) ([]video.Video, []video.NewVideo, models.VideoSlice) {
+	fakeVideos := make([]video.Video, length)
+	for i := 0; i < length; i++ {
+		fakeVideos[i] = *(videoFactory.MustCreate().(*video.Video))
+	}
+	fakeNewVideos := make([]video.NewVideo, length)
+	for i, fakeVideo := range fakeVideos {
+		fakeNewVideos[i] = video.NewVideo{
+			Title:        fakeVideo.Title,
+			Description:  fakeVideo.Description,
+			YearLaunched: &fakeVideo.YearLaunched,
+			Opened:       fakeVideo.Opened,
+			Rating:       &fakeVideo.Rating,
+			Duration:     &fakeVideo.Duration,
+			CategoriesId: fakeVideo.CategoriesId,
+			GenresId:     fakeVideo.GenresId,
 		}
 	}
 	fakeVideoSlice := make([]*models.Video, length)
-	for i, video := range fakeVideos {
-		fakeVideoSlice[i] = &models.Video{
-			ID:           video.ID,
-			Title:        video.Title,
-			Description:  video.Description,
-			YearLaunched: video.YearLaunched,
-			Opened:       video.Opened,
-			Rating:       video.Rating,
-			Duration:     video.Duration,
-			R:            video.R,
-		}
-	}
-	return fakeVideos, fakeVideosDTO, fakeVideoSlice
+	//for i, fakeVideo := range fakeVideos {
+	//	//yearLaunched := fakeVideo.YearLaunched
+	//	//opened := fakeVideo.Opened.Bool
+	//	//rating := fakeVideo.VideoRating(fakeVideo.Rating)
+	//	//duration := fakeVideo.Duration
+	//	fakeVideoSlice[i] = &models.Video{
+	//		ID:           fakeVideo.Id,
+	//		Title:        fakeVideo.Title,
+	//		Description:  fakeVideo.Description,
+	//		YearLaunched: *fakeVideo.YearLaunched,
+	//		Opened:       fakeVideo.Opened,
+	//		Rating:       fakeVideo.Rating,
+	//		Duration:     *fakeVideo.Duration,
+	//		R:            fakeVideo.R,
+	//	}
+	//}
+	return fakeVideos, fakeNewVideos, fakeVideoSlice
 }
